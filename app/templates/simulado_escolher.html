@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Simulados{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x1F4DD; Simulados</h1><p>Configure e inicie um simulado personalizado.</p></div>
+<div class="card animate-in" style="max-width:640px;margin-bottom:28px">
+  <h3 style="font-size:15px;margin-bottom:18px">&#x2699;&#xFE0F; Configurar Simulado</h3>
+  <form action="{{ url_for('main.simulado_iniciar') }}" method="GET" id="form-simulado">
+    <!-- Matérias -->
+    <div class="form-group">
+      <label class="form-label">Matérias (pode selecionar várias)</label>
+      <div class="multi-select-wrap" id="wrap-materias">
+        <div class="multi-select-trigger" onclick="toggleDropdown('drop-materias')" tabindex="0">
+          <span id="trigger-text-materias">Todas as matérias</span>
+          <span style="margin-left:auto;font-size:11px;opacity:.5">▼</span>
+        </div>
+        <div class="multi-select-dropdown" id="drop-materias" style="display:none">
+          <div class="multi-select-option" data-val="" data-label="Todas as matérias" onclick="toggleChip('materias','','Todas as matérias',this)">Todas as matérias</div>
+          {% for m in materias %}
+          <div class="multi-select-option" data-val="{{ m.id }}" data-label="{{ m.icone }} {{ m.nome }}" onclick="toggleChip('materias','{{ m.id }}','{{ m.icone }} {{ m.nome }}',this)">{{ m.icone }} {{ m.nome }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="multi-chips-row" id="chips-materias"></div>
+      <input type="hidden" name="materia_id" id="hidden-materias" value="">
+    </div>
+    <div class="grid-2">
+      <!-- Dificuldades -->
+      <div class="form-group">
+        <label class="form-label">Dificuldades (pode selecionar várias)</label>
+        <div class="multi-select-wrap" id="wrap-dificuldades">
+          <div class="multi-select-trigger" onclick="toggleDropdown('drop-dificuldades')" tabindex="0">
+            <span id="trigger-text-dificuldades">Todas</span>
+            <span style="margin-left:auto;font-size:11px;opacity:.5">▼</span>
+          </div>
+          <div class="multi-select-dropdown" id="drop-dificuldades" style="display:none">
+            <div class="multi-select-option" data-val="" data-label="Todas" onclick="toggleChip('dificuldades','','Todas',this)">Todas</div>
+            <div class="multi-select-option" data-val="facil" data-label="Fácil" onclick="toggleChip('dificuldades','facil','Fácil',this)">Fácil</div>
+            <div class="multi-select-option" data-val="medio" data-label="Médio" onclick="toggleChip('dificuldades','medio','Médio',this)">Médio</div>
+            <div class="multi-select-option" data-val="dificil" data-label="Difícil" onclick="toggleChip('dificuldades','dificil','Difícil',this)">Difícil</div>
+          </div>
+        </div>
+        <div class="multi-chips-row" id="chips-dificuldades"></div>
+        <input type="hidden" name="dificuldade" id="hidden-dificuldades" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de Questão</label>
+        <select name="tipo" class="form-control admin-select">
+          <option value="">Ambos</option>
+          <option value="multipla">&#x1F4CB; Múltipla Escolha</option>
+          <option value="discursiva">&#x1F4DD; Discursiva</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Quantidade de questões</label>
+        <select name="quantidade" class="form-control admin-select">
+          {% set max_q = current_user.max_questoes_simulado %}
+          {% set plano = current_user.plano_efetivo %}
+          {% if max_q >= 5  %}<option value="5">5 questões (~10 min)</option>{% endif %}
+          {% if max_q >= 10 %}<option value="10" selected>10 questões (~20 min)</option>{% endif %}
+          {% if max_q >= 15 %}<option value="15">15 questões (~30 min)</option>{% endif %}
+          {% if max_q >= 20 %}<option value="20">20 questões (~40 min)</option>{% endif %}
+          {% if max_q >= 30 %}<option value="30">30 questões (~60 min)</option>{% endif %}
+          {% if plano == 'advan' or current_user.is_admin %}<option value="50">50 questões (~100 min)</option>{% endif %}
+        </select>
+        {% if plano != 'advan' and not current_user.is_admin %}
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+          {% if plano is none %}Free: até 5 questões por simulado · 1 simulado/dia
+          {% elif plano == 'basic' %}Básico: até 15 questões por simulado · 3 simulados/dia
+          {% elif plano == 'inter' %}Intermediário: até 20 questões por simulado · 7 simulados/dia
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tópico (opcional)</label>
+        <input type="text" name="conteudo" class="form-control" placeholder="Ex: Álgebra...">
+      </div>
+    </div>
+    {% set lim = current_user.limite_simulados_dia %}
+    {% if lim and current_user.simulados_hoje >= lim %}
+    <div class="limite-alerta">&#x26A0;&#xFE0F; Limite de {{ lim }} simulados/dia atingido. <a href="{{ url_for('main.premium') }}" style="color:var(--gold)">Upgrade</a></div>
+    {% else %}
+    <button type="submit" class="btn btn-primary btn-full">&#x1F680; Iniciar Simulado</button>
+    {% endif %}
+  </form>
+</div>
+{% if materias %}
+<h3 class="animate-in" style="font-size:16px;margin-bottom:14px">&#x1F4DA; Iniciar por Matéria</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+  {% for m in materias %}
+  <div class="card animate-in" style="cursor:pointer;text-align:center" onclick="window.location='{{ url_for('main.simulado_iniciar') }}?materia_id={{ m.id }}'">
+    <div style="font-size:40px;margin-bottom:10px">{{ m.icone }}</div>
+    <h3 style="font-size:15px;margin-bottom:4px">{{ m.nome }}</h3>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">{{ m.total_questoes }} questões</p>
+    <a href="{{ url_for('main.simulado_iniciar') }}?materia_id={{ m.id }}" class="btn btn-primary btn-full btn-sm">Iniciar</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<script>
+// Multi-select chip system
+const multiState = {};
+
+function toggleDropdown(dropId) {
+  const drop = document.getElementById(dropId);
+  const isOpen = drop.style.display !== 'none';
+  // Close all
+  document.querySelectorAll('.multi-select-dropdown').forEach(d => { d.style.display='none'; });
+  document.querySelectorAll('.multi-select-wrap').forEach(w => w.classList.remove('open'));
+  if (!isOpen) {
+    drop.style.display = 'block';
+    drop.closest('.multi-select-wrap').classList.add('open');
+    // Apply grid layout if more than 6 options
+    const opts = drop.querySelectorAll('.multi-select-option');
+    if (opts.length > 6) drop.classList.add('grid-layout');
+    else drop.classList.remove('grid-layout');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('.multi-select-wrap')) {
+    document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.multi-select-wrap').forEach(w => w.classList.remove('open'));
+  }
+});
+
+function toggleChip(group, val, label, optEl) {
+  if(!multiState[group]) multiState[group] = [];
+  const idx = multiState[group].findIndex(x => x.val === val);
+  if(idx >= 0) {
+    multiState[group].splice(idx, 1);
+    optEl.classList.remove('selected');
+  } else {
+    // If selecting "all" (val=''), clear others; if selecting specific, remove "all"
+    if(val === '') {
+      multiState[group] = [];
+      document.querySelectorAll(`#drop-${group} .multi-select-option`).forEach(o => o.classList.remove('selected'));
+    } else {
+      const allIdx = multiState[group].findIndex(x => x.val === '');
+      if(allIdx >= 0) {
+        multiState[group].splice(allIdx, 1);
+        document.querySelector(`#drop-${group} .multi-select-option[data-val=""]`)?.classList.remove('selected');
+      }
+    }
+    multiState[group].push({val, label});
+    optEl.classList.add('selected');
+  }
+  renderChips(group);
+}
+
+function renderChips(group) {
+  const row = document.getElementById('chips-' + group);
+  const hidden = document.getElementById('hidden-' + group);
+  const triggerText = document.getElementById('trigger-text-' + group);
+  if(!row) return;
+  if(multiState[group].length === 0) {
+    row.innerHTML = '';
+    if(group === 'materias') { triggerText.textContent = 'Todas as matérias'; hidden.value = ''; }
+    else { triggerText.textContent = 'Todas'; hidden.value = ''; }
+    return;
+  }
+  triggerText.textContent = multiState[group].length + ' selecionado(s)';
+  row.innerHTML = multiState[group].map(item => `
+    <span class="multi-chip active" style="display:inline-flex;align-items:center;gap:5px;margin:4px 4px 0 0;padding:4px 10px;border-radius:99px;background:rgba(99,102,241,.18);color:var(--primary-light);font-size:12px;font-weight:600;cursor:default">
+      ${item.label}
+      <span onclick="removeChip('${group}','${item.val}')" style="cursor:pointer;font-size:14px;line-height:1;margin-left:2px;opacity:.7" title="Remover">×</span>
+    </span>
+  `).join('');
+  // Set hidden inputs - for multi values we need multiple inputs
+  // We'll use a data attr approach and override on submit
+  hidden.value = multiState[group].map(x => x.val).filter(v => v !== '').join(',');
+}
+
+function removeChip(group, val) {
+  const idx = multiState[group]?.findIndex(x => x.val === val);
+  if(idx >= 0) {
+    multiState[group].splice(idx, 1);
+    document.querySelector(`#drop-${group} .multi-select-option[data-val="${val}"]`)?.classList.remove('selected');
+    renderChips(group);
+  }
+}
+
+// On form submit, convert comma-separated values to multiple inputs
+document.getElementById('form-simulado')?.addEventListener('submit', function(e) {
+  ['materias','dificuldades'].forEach(group => {
+    const hidden = document.getElementById('hidden-' + group);
+    const paramName = group === 'materias' ? 'materia_id' : 'dificuldade';
+    // Remove hidden input
+    hidden.removeAttribute('name');
+    // Add multiple inputs
+    const vals = multiState[group]?.filter(x => x.val !== '').map(x => x.val) || [];
+    vals.forEach(v => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = paramName;
+      inp.value = v;
+      this.appendChild(inp);
+    });
+  });
+});
+</script>
+{% endblock %}

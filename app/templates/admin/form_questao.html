@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block extra_css %}
+{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x2753; {{ titulo }}</h1></div>
+<div style="max-width:720px">
+  <form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card animate-in" style="margin-bottom:18px">
+      <h3 style="font-size:15px;margin-bottom:16px">&#x1F4CB; Enunciado</h3>
+      <div class="form-group">
+        {{ form.enunciado.label(class='form-label') }}
+        {{ form.enunciado(class='form-control', rows=5, placeholder='Use $..$ para LaTeX inline ou $$...$$ para bloco.', id='enunciado-input') }}
+        {% for e in form.enunciado.errors %}<p class="form-error">{{ e }}</p>{% endfor %}
+        <div style="margin-top:8px">
+          <label class="form-label">Preview LaTeX:</label>
+          <div id="latex-preview-enunciado" class="discursiva-box" style="min-height:40px;font-size:14px"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        {{ form.explicacao.label(class='form-label') }}
+        {{ form.explicacao(class='form-control', rows=2, placeholder='Explicação exibida após a resposta (opcional)...') }}
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Tipo de Questão</label>
+          <select name="tipo_questao" id="tipo_questao" class="form-control admin-select">
+            <option value="multipla"   {% if form.tipo_questao.data=='multipla'   or not form.tipo_questao.data %}selected{% endif %}>&#x1F4CB; Múltipla Escolha</option>
+            <option value="discursiva" {% if form.tipo_questao.data=='discursiva' %}selected{% endif %}>&#x1F4DD; Discursiva</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dificuldade</label>
+          <select name="dificuldade" class="form-control admin-select">
+            <option value="facil"   {% if form.dificuldade.data=='facil'   %}selected{% endif %}>Fácil</option>
+            <option value="medio"   {% if not form.dificuldade.data or form.dificuldade.data=='medio' %}selected{% endif %}>Médio</option>
+            <option value="dificil" {% if form.dificuldade.data=='dificil' %}selected{% endif %}>Difícil</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Matéria</label>
+          <select name="materia_id" class="form-control admin-select">
+            <option value="">Selecione…</option>
+            {% for val, label in form.materia_id.choices %}<option value="{{ val }}" {% if form.materia_id.data==val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          {% for e in form.materia_id.errors %}<p class="form-error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="form-group">
+          {{ form.conteudo.label(class='form-label') }}
+          {{ form.conteudo(class='form-control', placeholder='Ex: Álgebra, Termodinâmica...') }}
+        </div>
+      </div>
+      <div class="form-group">
+        {{ form.imagem.label(class='form-label') }}
+        {{ form.imagem(class='form-control', accept='image/*') }}
+        {% if questao and questao.imagem_path %}
+        <div style="margin-top:8px"><img src="{{ url_for('static', filename='data/img_questao/'+questao.imagem_path) }}" style="max-height:100px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent"></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div id="campos-multipla" class="card animate-in" style="margin-bottom:18px">
+      <h3 style="font-size:15px;margin-bottom:16px">&#x1F524; Alternativas</h3>
+      {% for campo, letra in [(form.alternativa_a,'A'),(form.alternativa_b,'B'),(form.alternativa_c,'C'),(form.alternativa_d,'D')] %}
+      <div class="form-group" style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:30px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--surface-hover);border:1px solid var(--border);border-radius:8px;font-weight:700;font-size:13px;flex-shrink:0;margin-top:22px">{{ letra }}</div>
+        <div style="flex:1">
+          {{ campo.label(class='form-label') }}
+          {{ campo(class='form-control', placeholder='Alternativa ' + letra + ' (suporta LaTeX: $x^2$)') }}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="form-group" style="margin-top:8px">
+        <label class="form-label">Alternativa Correta</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          {% for val, label in [('a','A'),('b','B'),('c','C'),('d','D')] %}
+          <label class="correta-opt" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s">
+            <input type="radio" name="correta" value="{{ val }}" {% if form.correta.data==val %}checked{% endif %} style="accent-color:var(--emerald)">
+            <span style="font-weight:600">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="campos-discursiva" class="card animate-in" style="margin-bottom:18px;display:none">
+      <h3 style="font-size:15px;margin-bottom:8px">&#x1F4DD; Gabarito para IA</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">A IA compara a resposta do aluno com este gabarito.</p>
+      {{ form.resposta_correta(class='form-control', rows=5, placeholder='Escreva a resposta esperada / gabarito... (suporta LaTeX)') }}
+    </div>
+
+    <div style="display:flex;gap:12px">
+      {{ form.submit(class='btn btn-primary') }}
+      <a href="{{ url_for('main.admin_questoes') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+// Tipo questão toggle
+const tipoSel = document.getElementById('tipo_questao');
+function updateTipo(){
+  document.getElementById('campos-multipla').style.display  = tipoSel.value==='multipla'?'block':'none';
+  document.getElementById('campos-discursiva').style.display= tipoSel.value==='discursiva'?'block':'none';
+}
+tipoSel?.addEventListener('change', updateTipo); updateTipo();
+
+// Correta opt highlight
+document.querySelectorAll('.correta-opt input').forEach(r=>{
+  const upd=()=>{
+    document.querySelectorAll('.correta-opt').forEach(l=>{l.style.borderColor='var(--border)';l.style.background='transparent';});
+    r.parentElement.style.borderColor='var(--emerald)'; r.parentElement.style.background='rgba(52,211,153,.08)';
+  };
+  if(r.checked) upd(); r.addEventListener('change',upd);
+});
+
+// LaTeX live preview — usa helper global do base.html
+let previewTimeout;
+function _updateLatexPreview() {
+  const input   = document.getElementById('enunciado-input');
+  const preview = document.getElementById('latex-preview-enunciado');
+  if (!preview || !input) return;
+  preview.textContent = input.value;
+  if (typeof _renderKaTeX === 'function') {
+    _renderKaTeX(preview);
+  } else if (typeof renderMathInElement === 'function') {
+    renderMathInElement(preview, {
+      delimiters:[
+        {left:'$$',right:'$$',display:true},
+        {left:'\\[',right:'\\]',display:true},
+        {left:'$',right:'$',display:false},
+        {left:'\\(',right:'\\)',display:false}
+      ], throwOnError:false
+    });
+  }
+}
+document.getElementById('enunciado-input')?.addEventListener('input', function(){
+  clearTimeout(previewTimeout);
+  previewTimeout = setTimeout(_updateLatexPreview, 350);
+});
+// Renderizar valor inicial (aguardar KaTeX carregar)
+function _initLatexPreview() {
+  const input = document.getElementById('enunciado-input');
+  if (input && input.value) _updateLatexPreview();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initLatexPreview);
+} else {
+  // Delay to let KaTeX scripts fully execute
+  setTimeout(_initLatexPreview, 200);
+}
+</script>
+{% endblock %}

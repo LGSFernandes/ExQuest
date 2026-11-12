@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x1F465; Usuários</h1><p>{{ usuarios|length }} usuário(s).</p></div>
+<div class="card animate-in">
+  <table class="admin-table">
+    <thead><tr><th>Usuário</th><th>Email</th><th>Nível</th><th>Premium</th><th>Cadastro</th><th style="text-align:right">Ações</th></tr></thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="user-avatar-sm {{ u.borda_ativa or '' }}" style="width:30px;height:30px;font-size:14px">{{ avatar_display(u) }}</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">{{ nick_html(u) }}{% if u.is_admin %}<span class="badge badge-admin" style="font-size:10px;padding:1px 5px;margin-left:4px">Admin</span>{% endif %}{% if u.is_banido %}<span class="badge badge-erro" style="font-size:10px;padding:1px 5px;margin-left:4px">Banido</span>{% endif %}</div>
+              <div style="font-size:11px;color:var(--text-dim)">@{{ u.username }} #{{ u.tag_exibida }}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:13px;color:var(--text-muted)">{{ u.email }}</td>
+        <td><div style="font-size:13px;font-weight:600">Nv.{{ u.nivel }}</div><div style="font-size:11px;color:var(--text-dim)">{{ u.xp }} XP · {{ u.moedas }} &#x1FA99;</div></td>
+        <td>{% if u.premium_ativo %}<span class="badge badge-premium-{{ u.plano_efetivo }}" style="font-size:11px">{{ u.plano_efetivo|capitalize }}</span>{% else %}<span style="font-size:12px;color:var(--text-dim)">—</span>{% endif %}</td>
+        <td style="font-size:12px;color:var(--text-dim)">{{ u.criado_em.strftime('%d/%m/%Y') }}</td>
+        <td style="text-align:right">
+          <div style="display:flex;gap:6px;justify-content:flex-end">
+            <a href="{{ url_for('main.perfil', username=u.username) }}" class="btn btn-secondary btn-sm">Ver</a>
+            {% if not u.is_admin %}
+            <form method="POST" action="{{ url_for('main.admin_banir', uid=u.id) }}" style="display:inline">
+              {{ csrf_token_field() }}
+              <button type="submit" class="btn btn-sm {{ 'btn-secondary' if u.is_banido else 'btn-danger' }}"
+                      data-confirm="{{ 'Desbanir' if u.is_banido else 'Banir' }} {{ u.username }}?">
+                {{ '\U0001F513' if u.is_banido else '\U0001F512' }}
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<!-- Recompensa de nível -->
+{% if recompensa_nivel %}
+<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:8000;animation:fadeInUp .5s ease"
+     id="nivel-reward-banner">
+  <div style="background:linear-gradient(135deg,rgba(99,102,241,.95),rgba(168,85,247,.95));backdrop-filter:blur(16px);border:1px solid rgba(168,85,247,.4);border-radius:var(--radius-xl);padding:18px 28px;text-align:center;box-shadow:0 8px 32px rgba(99,102,241,.4)">
+    <div style="font-size:32px;margin-bottom:6px">&#x1F389;</div>
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:4px">Nível {{ recompensa_nivel.nivel }} alcançado!</div>
+    <div style="font-size:13px;opacity:.9">+{{ recompensa_nivel.moedas }} &#x1FA99; moedas
+      {% if recompensa_nivel.badge %} · &#x1F3C5; Badge desbloqueada!{% endif %}
+      {% if recompensa_nivel.borda %} · &#x2728; Borda desbloqueada!{% endif %}
+    </div>
+    <button onclick="document.getElementById('nivel-reward-banner').remove()"
+            style="margin-top:10px;background:rgba(255,255,255,.15);border:none;border-radius:99px;padding:4px 14px;color:#fff;cursor:pointer;font-size:12px">✕ Fechar</button>
+  </div>
+</div>
+{% endif %}
+
+<div class="page-header animate-in">
+  <h1>Olá, {{ nick_html(current_user) }}</h1>
+  <p>
+    Nível <strong style="color:var(--primary-light)">{{ current_user.nivel }}</strong> ·
+    {% if current_user.premium_ativo %}
+      {% if current_user.plano_efetivo == 'basic' %}
+        <span>&#x1F4A0; Premium Básico</span>
+      {% elif current_user.plano_efetivo == 'inter' %}
+        <span class="premium-label-inter">&#x2728; Premium Intermediário</span>
+      {% elif current_user.plano_efetivo == 'advan' %}
+        <span class="premium-label-advan">&#x1F48E; Premium Avançado</span>
+      {% endif %}
+    {% else %}
+      <span style="color:var(--text-muted)">Plano Gratuito</span>
+    {% endif %}
+  </p>
+</div>
+
+{% if current_user.boost_xp_atual > 0 or current_user.boost_moeda_atual > 0 %}
+<div class="animate-in" style="margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap">
+  {% if current_user.boost_xp_atual > 0 %}<span class="boost-ativo">&#x26A1; Boost XP +{{ current_user.boost_xp_atual }}%</span>{% endif %}
+  {% if current_user.boost_moeda_atual > 0 %}<span class="boost-ativo" style="background:rgba(251,191,36,.12);color:var(--gold);border-color:rgba(251,191,36,.2)">&#x1FA99; Boost Moedas +{{ current_user.boost_moeda_atual }}%</span>{% endif %}
+</div>
+{% endif %}
+
+<!-- Ads para free -->
+{% if current_user.tem_ads %}
+<div class="ads-banner animate-in">
+  <div>
+    <div class="ads-label">Anúncio</div>
+    <div style="font-size:13px;color:var(--text-muted)">Assista um anúncio para ganhar +2 questões hoje!</div>
+  </div>
+  <button class="ads-cta-btn" id="btn-watch-ad" onclick="abrirVideoAd()">&#x25B6; Assistir Anúncio</button>
+  <div id="ads-status-widget" style="font-size:12px;color:var(--text-dim)">Créditos hoje: <span id="ads-creditos-hoje">0</span>/3</div>
+</div>
+{% endif %}
+
+<div class="stats-grid">
+  <div class="stat-card animate-in delay-1"><div class="stat-icon stat-icon-xp">&#x26A1;</div><div class="stat-value" style="color:var(--primary-light)">{{ current_user.xp }}</div><div class="stat-label">XP Total</div></div>
+  <div class="stat-card animate-in delay-2"><div class="stat-icon stat-icon-coins">&#x1FA99;</div><div class="stat-value" style="color:var(--gold)">{{ current_user.moedas }}</div><div class="stat-label">Moedas</div></div>
+  <div class="stat-card animate-in delay-3"><div class="stat-icon stat-icon-streak">&#x1F525;</div><div class="stat-value" style="color:var(--rose)">{{ streak.sequencia_atual if streak else 0 }}</div><div class="stat-label">Streak Atual</div></div>
+  <div class="stat-card animate-in delay-4"><div class="stat-icon stat-icon-correct">&#x2705;</div><div class="stat-value" style="color:var(--emerald)">{{ current_user.percentual_acerto }}%</div><div class="stat-label">Taxa de Acerto</div></div>
+</div>
+
+<div class="grid-2" style="margin-bottom:22px">
+  <div class="card animate-in">
+    <div class="card-header">
+      <span class="card-title">&#x26A1; Nível {{ current_user.nivel }}</span>
+      <span style="font-size:12px;color:var(--text-muted)">{{ current_user.xp }}/{{ current_user.xp_para_proximo_nivel }} XP</span>
+    </div>
+    <div class="progress-bar-wrap" style="margin-bottom:8px"><div class="progress-bar-fill" data-width="{{ current_user.progresso_nivel }}" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:16px">
+      <span>Nível {{ current_user.nivel }}</span><span>{{ current_user.progresso_nivel }}%</span><span>Nível {{ current_user.nivel+1 }}</span>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap">
+      <div><div style="font-size:20px;font-weight:800;font-family:var(--font-display)">{{ current_user.total_respostas }}</div><div style="font-size:11px;color:var(--text-muted)">respondidas</div></div>
+      <div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--emerald)">{{ current_user.total_acertos }}</div><div style="font-size:11px;color:var(--text-muted)">acertos</div></div>
+      <div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--rose)">{{ streak.maior_sequencia if streak else 0 }}</div><div style="font-size:11px;color:var(--text-muted)">maior streak</div></div>
+    </div>
+    <hr class="divider">
+    <!-- Contadores de uso diário -->
+    {% set lim_q = current_user.limite_questoes_dia %}
+    {% set lim_s = current_user.limite_simulados_dia %}
+    {% set plano = current_user.plano_efetivo %}
+    <div style="font-size:12px;color:var(--text-dim)">
+      {% if plano == 'advan' or current_user.is_admin %}
+        {# Premium Avançado: só mostra quantidade feita, sem limite #}
+        Questões hoje: <strong style="color:var(--emerald)">{{ current_user.questoes_hoje }}</strong>
+        · Simulados hoje: <strong style="color:var(--emerald)">{{ current_user.simulados_hoje }}</strong>
+      {% else %}
+        {% set rest_q = [lim_q - current_user.questoes_hoje, 0]|max if lim_q else 999 %}
+        {% set rest_s = [lim_s - current_user.simulados_hoje, 0]|max if lim_s else 999 %}
+        Questões hoje:
+        <strong style="color:{% if rest_q <= 0 %}var(--rose){% elif rest_q <= 2 %}var(--gold){% else %}var(--emerald){% endif %}">
+          {{ current_user.questoes_hoje }}/{{ lim_q or '∞' }}{% if lim_q %} ({{ rest_q }} restantes){% endif %}
+        </strong>
+        ·
+        Simulados hoje:
+        <strong style="color:{% if rest_s <= 0 %}var(--rose){% elif rest_s <= 1 %}var(--gold){% else %}var(--emerald){% endif %}">
+          {{ current_user.simulados_hoje }}/{{ lim_s or '∞' }}{% if lim_s %} ({{ rest_s }} restantes){% endif %}
+        </strong>
+      {% endif %}
+    </div>
+    {% set lim_q2 = current_user.limite_questoes_dia %}
+    {% set rest_q2 = [lim_q2 - current_user.questoes_hoje, 0]|max if lim_q2 else 999 %}
+    {% if rest_q2 <= 0 and lim_q2 %}
+    <div class="limite-alerta" style="margin-top:10px">&#x26A0;&#xFE0F; Limite diário de questões atingido. <a href="{{ url_for('main.premium') }}" style="color:var(--gold)">Fazer upgrade</a></div>
+    {% endif %}
+  </div>
+
+  <div class="card animate-in">
+    <div class="card-header"><span class="card-title">&#x1F3C6; Top Ranking</span><a href="{{ url_for('main.ranking') }}" class="btn btn-secondary btn-sm">Ver tudo</a></div>
+    {% for u in ranking %}
+    <div class="ranking-item rank-{{ loop.index }} {% if u.id == current_user.id %}me{% endif %}">
+      <span class="rank-pos">{% if loop.index==1 %}&#x1F947;{% elif loop.index==2 %}&#x1F948;{% elif loop.index==3 %}&#x1F949;{% else %}{{ loop.index }}{% endif %}</span>
+      <div class="user-avatar-sm {{ u.borda_ativa or '' }}" style="width:30px;height:30px;font-size:14px">{{ avatar_display(u) }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          {{ nick_html(u) }}
+          {% if u.premium_ativo %}
+            {% if u.plano_efetivo=='inter' %}<span style="font-size:14px;margin-left:2px" title="Premium Intermediário">&#x2728;</span>
+            {% elif u.plano_efetivo=='advan' %}<span style="font-size:14px;margin-left:2px" title="Premium Avançado">&#x1F48E;</span>{% endif %}
+          {% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">Nível {{ u.nivel }}</div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:var(--primary-light)">{{ u.xp }} XP</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card animate-in" style="margin-bottom:22px">
+  <div class="card-header">
+    <span class="card-title">&#x1F4DA; Matérias</span>
+    <div style="display:flex;gap:8px">
+      <a href="{{ url_for('main.questoes') }}" class="btn btn-secondary btn-sm">&#x1F4A1; Questões</a>
+      <a href="{{ url_for('main.simulado_escolher') }}" class="btn btn-primary btn-sm">&#x1F4DD; Simulado</a>
+    </div>
+  </div>
+  {% if materias %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+    {% for m in materias %}
+    <a href="{{ url_for('main.simulado_iniciar') }}?materia_id={{ m.id }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);text-decoration:none;color:var(--text);transition:border-color .2s"
+       onmouseover="this.style.borderColor='rgba(99,102,241,.3)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span style="font-size:20px">{{ m.icone }}</span>
+      <div><div style="font-weight:600;font-size:13px">{{ m.nome }}</div><div style="font-size:11px;color:var(--text-muted)">{{ m.total_questoes }} questões</div></div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="empty-state-icon">&#x1F4ED;</div><p>Nenhuma matéria ainda.</p></div>
+  {% endif %}
+</div>
+
+{% if stats_materias %}
+<div class="card animate-in" style="margin-bottom:22px">
+  <div class="card-header"><span class="card-title">&#x1F4CA; Desempenho por Matéria</span></div>
+  {% for s in stats_materias %}
+  <div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+      <span>{{ s.materia.icone }} {{ s.materia.nome }}</span>
+      <span style="color:var(--text-muted)">{{ s.acertos }}/{{ s.total }} ({{ s.pct }}%)</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" data-width="{{ s.pct }}" style="width:0%;background:{{ s.materia.cor }}"></div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if ultimas_respostas %}
+<div class="card animate-in">
+  <div class="card-header"><span class="card-title">&#x1F550; Atividade Recente</span></div>
+  {% for r in ultimas_respostas %}
+  <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+    <span>{{ '\U00002705' if r.acertou else '\U0000274C' }}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)">{{ r.questao.enunciado[:75] }}…</div>
+      <div style="font-size:11px;color:var(--text-dim)">{{ r.questao.materia.nome }} · {{ r.data_resposta.strftime('%d/%m %H:%M') }}</div>
+    </div>
+    {% if r.acertou %}<div style="text-align:right;white-space:nowrap;flex-shrink:0"><div style="font-size:12px;color:var(--primary-light)">+{{ r.xp_ganho }} XP</div><div style="font-size:11px;color:var(--gold)">+{{ r.moedas_ganhas }} &#x1FA99;</div></div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Logs de Auditoria{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x1F50D; Logs de Auditoria</h1><p>Últimos 200 eventos.</p></div>
+<div class="card animate-in">
+  <table class="admin-table">
+    <thead><tr><th>Data/Hora</th><th>Ação</th><th>Usuário</th><th>IP</th><th>Detalhe</th><th>Resultado</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td style="font-size:12px;color:var(--text-dim);white-space:nowrap">{{ log.criado_em.strftime('%d/%m %H:%M:%S') }}</td>
+        <td style="font-size:13px;font-weight:600">{{ log.acao }}</td>
+        <td style="font-size:12px;color:var(--text-muted)">{% if log.usuario_id %}#{{ log.usuario_id }}{% else %}—{% endif %}</td>
+        <td style="font-size:12px;color:var(--text-dim);font-family:monospace">{{ log.ip or '—' }}</td>
+        <td style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.detalhe or '—' }}</td>
+        <td><span class="badge {% if log.resultado=='ok' %}badge-acerto{% elif log.resultado=='bloqueado' %}badge-erro{% else %}badge-medio{% endif %}" style="font-size:11px">{{ log.resultado }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

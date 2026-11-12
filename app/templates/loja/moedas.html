@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Comprar Moedas{% endblock %}
+{% block content %}
+<div class="page-header animate-in">
+  <h1>&#x1F4B0; Comprar Moedas</h1>
+  <p>Você tem <strong style="color:var(--gold)">{{ current_user.moedas }} &#x1FA99;</strong> · Use moedas na loja para bordas, efeitos, badges e boosts!</p>
+</div>
+{% if not ja_comprou %}
+<div class="card animate-in" style="margin-bottom:24px;border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.04)">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span style="font-size:32px">&#x1F381;</span>
+    <div><h3 style="font-size:15px;margin-bottom:4px;color:var(--emerald)">Bônus de Primeira Compra!</h3><p style="font-size:13px;color:var(--text-muted)">Ganhe moedas extras na sua primeira compra. Bônus aplicado automaticamente.</p></div>
+  </div>
+</div>
+{% endif %}
+<div class="pacote-moedas-grid">
+  {% for pid, pac in pacotes.items() %}
+  <div class="pacote-card pacote-{{ pid }} animate-in">
+    <div style="font-size:28px;margin-bottom:10px">&#x1FA99;</div>
+    <div class="pacote-moedas-qtd">{{ pac.moedas }}</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">moedas</div>
+    {% if not ja_comprou %}
+    <div class="pacote-bonus">&#x1F381; +{{ pac.bonus }} de bônus (1ª compra)</div>
+    {% endif %}
+    <div class="pacote-preco">R$ {{ '%.2f'|format(pac.preco)|replace('.',',') }}</div>
+    {% if not ja_comprou %}
+    <div style="font-size:12px;color:var(--emerald);margin-bottom:12px">Total: {{ pac.moedas + pac.bonus }} moedas</div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('main.loja_moedas_comprar', pacote_id=pid) }}">
+      {{ csrf_token_field() }}
+      <button type="submit" class="btn btn-primary btn-full">
+        Comprar — R$ {{ '%.2f'|format(pac.preco)|replace('.',',') }}
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+<div class="card animate-in" style="margin-top:24px;text-align:center">
+  <p style="font-size:13px;color:var(--text-muted)">&#x1F512; Pagamento seguro via Mercado Pago. Dados bancários nunca armazenados. Crédito instantâneo após confirmação.</p>
+</div>
+{% endblock %}

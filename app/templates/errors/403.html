@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>403 — ExQuest</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        body {
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            background:var(--bg)
+        }
+        .ec {
+            text-align:center;
+            max-width:420px;
+            padding:48px 32px;
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius-xl)
+        }
+        .n {
+            font-family:'Syne',sans-serif;
+            font-size:72px;font-weight:800;
+            background:linear-gradient(135deg,#6366f1,#f472b6);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text
+        }
+    </style>
+</head>
+<body>
+    <div class="ec">
+        <div style="font-size:60px;margin-bottom:16px">&#x1F6AB;</div>
+        <div class="n">403</div>
+        <h1 style="font-size:20px;margin:12px 0 8px">Acesso Negado</h1>
+        <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">Você não tem permissão para acessar esta página.</p>
+        <a href="/dashboard" class="btn btn-primary">&#8592; Voltar ao Dashboard</a>
+    </div>
+</body>
+</html>

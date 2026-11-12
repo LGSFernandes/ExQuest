@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Meus Pagamentos{% endblock %}
+{% block content %}
+<div class="page-header animate-in">
+  <h1>&#x1F4B3; Histórico de Pagamentos</h1>
+  <p style="color:var(--text-muted);font-size:14px">Informações confidenciais — visíveis apenas por você.</p>
+</div>
+
+<div class="card animate-in" style="margin-bottom:20px;border-color:rgba(99,102,241,.2)">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:13px;color:var(--text-dim)">Plano atual</div>
+      <div style="font-weight:700;font-size:16px">
+        {% if current_user.premium_ativo %}
+          {{ {'basic':'Básico','inter':'Intermediário','advan':'Avançado'}.get(current_user.plano_efetivo,'Gratuito') }}
+          {% if current_user.premium_cancelar_em %}
+            <span style="color:var(--rose);font-size:12px">(cancelamento em {{ current_user.premium_cancelar_em.strftime('%d/%m/%Y') }})</span>
+          {% endif %}
+        {% else %}
+          Gratuito
+        {% endif %}
+      </div>
+    </div>
+    {% if current_user.premium_expira %}
+    <div style="margin-left:24px">
+      <div style="font-size:13px;color:var(--text-dim)">{{ 'Expira em' if current_user.premium_cancelar_em else 'Próxima cobrança' }}</div>
+      <div style="font-weight:600">{{ current_user.premium_expira.strftime('%d/%m/%Y') }}</div>
+    </div>
+    {% endif %}
+    <div style="margin-left:auto;display:flex;gap:8px">
+      {% if current_user.premium_ativo %}
+        {% if current_user.premium_cancelar_em %}
+          <form method="POST" action="{{ url_for('main.premium_reativar') }}">{{ csrf_token_field() }}
+            <button class="btn btn-primary btn-sm">Manter Assinatura</button>
+          </form>
+        {% else %}
+          <form method="POST" action="{{ url_for('main.premium_cancelar') }}" onsubmit="return false" id="form-cancelar">{{ csrf_token_field() }}
+            <button type="button" class="btn btn-danger btn-sm" onclick="exqConfirm('Cancelar assinatura ao fim do período atual?', function(){ document.getElementById(\'form-cancelar\').submit(); }, {icon:\'&#x26A0;&#xFE0F;\', title:\'Cancelar Assinatura\', okLabel:\'Cancelar Assinatura\', okClass:\'btn-danger\'})">Cancelar Assinatura</button>
+          </form>
+        {% endif %}
+      {% endif %}
+      <a href="{{ url_for('main.premium') }}" class="btn btn-secondary btn-sm">Ver Planos</a>
+    </div>
+  </div>
+</div>
+
+<div class="card animate-in">
+  {% if not historico %}
+  <div class="empty-state"><div class="empty-state-icon">&#x1F4B3;</div><p>Nenhum registro de pagamento encontrado.</p></div>
+  {% else %}
+  <div style="overflow-x:auto">
+    <table class="admin-table" style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Plano</th>
+          <th>Ciclo</th>
+          <th>Valor</th>
+          <th>Cartão</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in historico %}
+        <tr>
+          <td style="font-size:13px;white-space:nowrap">{{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td style="font-size:13px;max-width:280px">{{ p.descricao or '—' }}</td>
+          <td><span class="badge">{{ {'basic':'Básico','inter':'Intermediário','advan':'Avançado'}.get(p.plano, p.plano) }}</span></td>
+          <td style="font-size:13px">{{ p.ciclo.capitalize() if p.ciclo else '—' }}</td>
+          <td style="font-weight:600;color:{% if p.status=='pago' %}var(--emerald){% elif p.status=='cancelado' %}var(--rose){% else %}var(--gold){% endif %}">
+            {% if p.valor > 0 %}R$ {{ '%.2f'|format(p.valor)|replace('.',',') }}{% else %}—{% endif %}
+          </td>
+          <td style="font-size:13px;font-family:monospace">
+            {% if p.cartao_numero %}{{ p.cartao_numero }}{% elif p.cartao_final %}**** **** **** {{ p.cartao_final }}{% else %}<span style="color:var(--text-dim)">—</span>{% endif %}
+            {% if p.cartao_nome %}<div style="font-size:11px;color:var(--text-dim)">{{ p.cartao_nome }}</div>{% endif %}
+          </td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;
+              background:{% if p.status=='pago' %}rgba(52,211,153,.12){% elif p.status=='cancelado' %}rgba(251,113,133,.12){% else %}rgba(251,191,36,.12){% endif %};
+              color:{% if p.status=='pago' %}var(--emerald){% elif p.status=='cancelado' %}var(--rose){% else %}var(--gold){% endif %}">
+              {% if p.status=='pago' %}✓ Pago{% elif p.status=='cancelado' %}✗ Cancelado{% else %}&#x23F3; Pendente{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

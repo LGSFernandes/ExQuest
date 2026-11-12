@@ -1,0 +1,231 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{{ titulo|default('ExQuest') }}{% endblock %} — ExQuest</title>
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+  
+  <link rel="manifest" href="{{ url_for('static', filename='img/site.webmanifest') }}">
+  
+  <!-- KaTeX global (hospedado localmente para não depender de CDN externo) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/katex/katex.min.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{{ current_user.efeito_ativo or '' if current_user.is_authenticated else '' }}">
+
+<div class="flash-container" id="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">
+      <span>{{ message }}</span>
+      <button class="alert-close" onclick="(function(btn){var el=btn.closest('.alert');if(el){el.style.transition='opacity .3s,transform .3s';el.style.opacity='0';el.style.transform='translateX(20px)';setTimeout(()=>el.remove(),320);};})(this)">✕</button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<div class="overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+           alt="ExQuest" style="height:32px;width:auto;object-fit:contain">
+      <div class="logo-icon" style="display:none">&#x1F3AF;</div>
+      <a href="{{ url_for('main.dashboard') }}" class="logo-text">ExQuest</a>
+    </div>
+
+    <span class="nav-section-label">Menu</span>
+    <a href="{{ url_for('main.dashboard') }}"         class="nav-link"><span class="nav-icon">&#x1F3E0;</span>Dashboard</a>
+    <a href="{{ url_for('main.simulado_escolher') }}" class="nav-link"><span class="nav-icon">&#x1F4DD;</span>Simulados</a>
+    <a href="{{ url_for('main.questoes') }}"          class="nav-link"><span class="nav-icon">&#x1F4A1;</span>Questões</a>
+    <a href="{{ url_for('main.ranking') }}"           class="nav-link"><span class="nav-icon">&#x1F3C6;</span>Ranking</a>
+    <a href="{{ url_for('main.social') }}"            class="nav-link{% if request.path == '/social' or request.path.startswith('/social/') %} active{% endif %}"><span class="nav-icon">&#x1F4AC;</span>Social</a>
+    <a href="{{ url_for('main.competicoes') }}"        class="nav-link"><span class="nav-icon">&#x1F3C6;</span>Competições</a>
+    <a href="{{ url_for('main.loja') }}"              class="nav-link"><span class="nav-icon">&#x1F6D2;</span>Loja</a>
+    <a href="{{ url_for('main.premium') }}"           class="nav-link"><span class="nav-icon">&#x1F48E;</span>Premium</a>
+
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <span class="nav-section-label">Admin</span>
+    <a href="{{ url_for('main.admin_painel') }}"   class="nav-link"><span class="nav-icon">&#x2699;&#xFE0F;</span>Painel</a>
+    <a href="{{ url_for('main.admin_materias') }}" class="nav-link"><span class="nav-icon">&#x1F4DA;</span>Matérias</a>
+    <a href="{{ url_for('main.admin_questoes') }}" class="nav-link"><span class="nav-icon">&#x2753;</span>Questões</a>
+    <a href="{{ url_for('main.admin_usuarios') }}" class="nav-link"><span class="nav-icon">&#x1F465;</span>Usuários</a>
+    <a href="{{ url_for('main.admin_logs') }}"     class="nav-link"><span class="nav-icon">&#x1F50D;</span>Logs</a>
+    <a href="{{ url_for('main.admin_novo_torneio') }}" class="nav-link"><span class="nav-icon">&#x1F3C1;</span>Novo Torneio</a>
+    {% endif %}
+
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-user">
+      <a href="{{ url_for('main.perfil', username=current_user.username) }}" class="sidebar-user-card">
+        <div class="user-avatar-sm {{ current_user.borda_ativa or '' }}">
+          {{ avatar_display(current_user) }}
+        </div>
+        <div class="user-info-sm">
+          <div class="user-name-sm">{{ nick_html(current_user) }}</div>
+          <div class="user-tag-sm">#{{ current_user.tag_exibida }}</div>
+        </div>
+      </a>
+      <a href="#" id="logout-nav-link" data-logout-url="{{ url_for('main.logout') }}" class="nav-link" style="margin-top:4px">
+        <span class="nav-icon">&#x1F6AA;</span>Sair
+      </a>
+    </div>
+    {% endif %}
+</aside>
+
+<div class="app-wrapper">
+
+<!-- ══ CONTEÚDO ══ -->
+<div class="content-area">
+  <header class="mobile-header">
+    <button id="menu-toggle" class="mobile-menu-btn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="logo-text">ExQuest</span>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main.perfil', username=current_user.username) }}">
+      <div class="user-avatar-sm" style="width:32px;height:32px;font-size:14px">
+        {{ avatar_display(current_user) }}
+      </div>
+    </a>
+    {% else %}
+    <div style="width:32px"></div>
+    {% endif %}
+  </header>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/efeitos.js') }}"></script>
+<!-- KaTeX auto-render global (hospedado localmente para não depender de CDN externo) -->
+<script src="{{ url_for('static', filename='vendor/katex/katex.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/katex/contrib/auto-render.min.js') }}"></script>
+<script>
+var _katexDelimiters = [
+  {left:'$$',right:'$$',display:true},
+  {left:'\\[',right:'\\]',display:true},
+  {left:'$',right:'$',display:false},
+  {left:'\\(',right:'\\)',display:false}
+];
+function _renderKaTeX(root) {
+  if (typeof renderMathInElement === 'undefined') return;
+  try {
+    renderMathInElement(root || document.body, {
+      delimiters: _katexDelimiters,
+      throwOnError: false,
+      ignoredTags: ['script','noscript','style','textarea','pre','code','input']
+    });
+  } catch(e) {}
+}
+// Watch for dynamically injected content
+if (typeof MutationObserver !== 'undefined') {
+  var _katexObs = new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      m.addedNodes.forEach(function(n) {
+        if (n.nodeType === 1) { _renderKaTeX(n); }
+      });
+    });
+  });
+  document.addEventListener('DOMContentLoaded', function() {
+    _katexObs.observe(document.body, {childList: true, subtree: true});
+  });
+}
+</script>
+{% block extra_js %}{% endblock %}
+<script>
+// Final KaTeX render after all scripts loaded
+(function() {
+  function doRender() { if (typeof _renderKaTeX === 'function') _renderKaTeX(document.body); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', doRender);
+  } else {
+    doRender();
+  }
+})();
+</script>
+
+<!-- Ads Video Modal (só para usuários Free) -->
+{% if current_user.is_authenticated and current_user.tem_ads %}
+<div class="ads-video-modal" id="ads-video-modal">
+  <div class="ads-video-card">
+    <div class="ads-video-top">
+      <span>&#x1F4E2; Anúncio — assista para ganhar questões extras</span>
+      <span class="ads-countdown" id="ads-countdown">15s</span>
+    </div>
+    <div class="ads-video-player">&#x1F3AC;</div>
+    <div class="ads-video-footer">
+      <div style="font-size:13px;color:var(--text-muted)">+2 questões ao completar</div>
+      <div style="display:flex;gap:10px">
+        <button id="btn-pular-ad" class="btn btn-secondary btn-sm" onclick="fecharVideoAd()" style="display:none">Pular ⟶</button>
+        <button id="btn-coletar-ad" class="btn btn-primary btn-sm" onclick="coletarRecompensaAd()" style="display:none">&#x2705; Coletar +2 questões</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/ads.js') }}"></script>
+{% endif %}
+
+<!-- Preview Modal (Loja) -->
+<div class="preview-modal" id="preview-modal">
+  <div class="preview-card" style="max-width:480px;width:92%">
+    <button onclick="fecharPreview()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer">✕</button>
+    <!-- Área de preview: efeitos ficam AQUI ao redor do avatar, não no lugar do banner -->
+    <div style="position:relative;height:160px;background:linear-gradient(135deg,#0f172a,#1e1b4b);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;margin:-28px -28px 0" id="preview-perfil-wrap">
+      <!-- Canvas de efeito será injetado aqui -->
+    </div>
+    <div class="preview-avatar {{ current_user.borda_ativa or '' }}" id="preview-avatar-wrap" style="margin:-44px auto 14px;position:relative;z-index:10">
+      {{ avatar_display(current_user) }}
+    </div>
+    <span class="badge" id="preview-badge" style="display:none;margin:0 auto 12px"></span>
+    <h3 id="preview-item-nome" style="font-family:var(--font-display);font-size:18px;text-align:center;margin-bottom:6px"></h3>
+    <p id="preview-item-desc" style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:18px"></p>
+    <div style="display:flex;justify-content:center">
+      <button onclick="fecharPreview()" class="btn btn-secondary">Fechar</button>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/loja_preview.js') }}" id="_loja-preview-script"></script>
+
+<!-- Trial Modal -->
+{% if tem_trial is defined and tem_trial %}
+<div id="trial-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)">
+  <div class="trial-card">
+    <button class="trial-dismiss" onclick="document.getElementById('trial-modal').remove()">✕</button>
+    <span class="trial-badge">&#x1F381;</span>
+    <h2 style="font-family:var(--font-display);font-size:22px;margin-bottom:10px">1 Mês Grátis!</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px">
+      Você completa 1 mês na plataforma! Como agradecimento, ganhe <strong style="color:var(--primary-light)">1 mês de Premium Básico gratuito</strong>.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="document.getElementById('trial-modal').remove()" class="btn btn-secondary">Agora não</button>
+      <button onclick="aceitarTrial()" class="btn btn-primary">&#x1F389; Aceitar grátis!</button>
+    </div>
+  </div>
+</div>
+<script>
+function aceitarTrial() {
+  fetch('/api/trial/aceitar', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('meta[name="csrf-token"]').content},
+    body:'{}'
+  }).then(r=>r.json()).then(d=>{
+    document.getElementById('trial-modal').remove();
+    if(d.ok) { showToast('\u{1F389} ' + d.msg, 'success'); setTimeout(()=>location.reload(), 1500); }
+  });
+}
+</script>
+{% endif %}
+</body>
+</html>

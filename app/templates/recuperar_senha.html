@@ -1,0 +1,13 @@
+{% extends "base_auth.html" %}
+{% block title %}Recuperar Senha{% endblock %}
+{% block content %}
+<div class="auth-page"><div class="auth-card" style="max-width:440px">
+  <div class="auth-logo"><div class="auth-logo-icon">&#x1F511;</div><h1 class="auth-title">Recuperar Senha</h1><p class="auth-subtitle">Enviaremos instruções para seu email</p></div>
+  <form method="POST" action="{{ url_for('main.recuperar_senha') }}">
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ form.email.label(class='form-label') }}{{ form.email(class='form-control', placeholder='seu@email.com') }}{% for e in form.email.errors %}<p class="form-error">{{ e }}</p>{% endfor %}</div>
+    {{ form.submit(class='btn btn-primary btn-full') }}
+  </form>
+  <hr class="divider"><p class="text-center" style="font-size:14px;color:var(--text-muted)"><a href="{{ url_for('main.login') }}" style="color:var(--primary-light)">&#8592; Voltar ao login</a></p>
+</div></div>
+{% endblock %}

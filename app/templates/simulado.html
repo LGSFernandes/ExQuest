@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Simulado{% endblock %}
+{% block extra_css %}
+{% endblock %}
+{% block content %}
+<div class="simulado-timer">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="{{ url_for('main.simulado_escolher') }}" class="btn btn-secondary btn-sm">← Sair</a>
+      {% if materias_sel %}<span style="font-size:13px;font-weight:600">{% for m in materias_sel %}{{ m.icone }} {{ m.nome }}{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+    </div>
+    <div style="display:flex;align-items:center;gap:18px">
+      {% if tempo_min > 0 %}<div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;color:var(--text-muted)">&#x23F1;&#xFE0F;</span><span class="timer-display" id="timer-display">{{ '%02d'|format(tempo_min) }}:00</span></div>{% endif %}
+      <span id="simulado-progress-label" style="font-size:13px;color:var(--text-muted)">0/{{ questoes|length }}</span>
+    </div>
+  </div>
+  <div class="progress-bar-wrap" style="margin-top:10px;height:4px"><div class="progress-bar-fill" id="simulado-progress-fill" style="width:0%;height:100%"></div></div>
+</div>
+
+<div id="simulado-container" data-tempo-min="{{ tempo_min }}">
+  {% for q in questoes %}
+  <div class="questao-card animate-in" data-questao-id="{{ q.id }}" data-tipo="{{ q.tipo }}" style="animation-delay:{{ loop.index0 * 0.04 }}s">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span class="questao-numero">Questão {{ loop.index }}/{{ questoes|length }}</span>
+      <span class="badge badge-{{ q.dificuldade }}">{{ q.dificuldade|capitalize }}</span>
+      {% if q.tipo == 'discursiva' %}<span class="badge" style="background:rgba(99,102,241,.15);color:var(--primary-light)">&#x1F4DD; Discursiva</span>{% endif %}
+      {% if q.conteudo %}<span style="font-size:12px;color:var(--text-dim)">{{ q.conteudo }}</span>{% endif %}
+      <span style="margin-left:auto;font-size:12px;color:var(--text-dim)">&#x26A1; {{ q.xp_recompensa[0] }}-{{ q.xp_recompensa[1] }} XP</span>
+    </div>
+    <div class="questao-enunciado latex-render">{{ q.enunciado }}</div>
+    {% if q.imagem_path %}
+    <img src="{{ url_for('static', filename='data/img_questao/' + q.imagem_path) }}" alt="Imagem" class="questao-img" style="background:transparent">
+    {% endif %}
+    {% if q.tipo == 'multipla' %}
+    <div class="alternativas-grid">
+      {% set letras = ['A','B','C','D'] %}
+      {% for alt in q.alternativas %}
+      <button class="alternativa-btn" data-alternativa-id="{{ alt.id }}" type="button">
+        <span class="alternativa-letra">{{ letras[loop.index0] }}</span>
+        <span class="latex-render">{{ alt.texto }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="discursiva-box">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">&#x1F4DD; Sua resposta:</label>
+      <textarea class="resposta-discursiva form-control" rows="5" placeholder="Escreva sua resposta aqui..."></textarea>
+    </div>
+    {% endif %}
+    <div class="resultado-box"></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+      <button class="btn btn-secondary btn-confirmar" type="button" disabled>
+        {% if q.tipo == 'discursiva' %}Enviar para IA avaliar{% else %}Selecione uma alternativa{% endif %}
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.latex-render').forEach(el => {
+    renderMathInElement(el, {
+      delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
+      throwOnError:false
+    });
+  });
+});
+</script>
+<script src="{{ url_for('static', filename='js/simulado.js') }}"></script>
+{% endblock %}

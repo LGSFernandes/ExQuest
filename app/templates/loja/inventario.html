@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Inventário{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x1F392; Inventário</h1><p>Equipe itens para exibir no seu perfil!</p></div>
+{% if itens %}
+<div class="inv-grid">
+  {% for inv in itens %}
+  <div class="inv-card animate-in">
+    <div style="font-size:34px;margin-bottom:8px">{% if inv.item.tipo=='borda' %}&#x1F535;{% elif inv.item.tipo=='efeito' %}&#x2728;{% elif inv.item.tipo=='badge' %}&#x1F3C5;{% elif inv.item.tipo=='boost_xp' %}&#x26A1;{% elif inv.item.tipo=='boost_moeda' %}&#x1FA99;{% else %}&#x1F6E1;&#xFE0F;{% endif %}</div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:4px">{{ inv.item.nome }}</div>
+    <span class="badge-raridade {{ inv.item.raridade }}" style="margin-bottom:10px;display:inline-block">{{ inv.item.raridade|capitalize }}</span>
+    {% if inv.quantidade > 1 %}<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">x{{ inv.quantidade }}</div>{% endif %}
+    <button class="btn btn-primary btn-sm btn-full" onclick="usarItem({{ inv.item_id }})">{% if inv.equipado %}✓ Equipado{% else %}Equipar{% endif %}</button>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F392;</div><p>Inventário vazio. <a href="{{ url_for('main.loja') }}">Visite a loja!</a></p></div></div>
+{% endif %}
+{% endblock %}

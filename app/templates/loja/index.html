@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Loja{% endblock %}
+{% block content %}
+<div class="page-header animate-in">
+  <h1>&#x1F6D2; Loja</h1>
+  <p>Você tem <strong style="color:var(--gold)">{{ current_user.moedas }} &#x1FA99;</strong> · <a href="{{ url_for('main.loja_moedas') }}" class="btn btn-secondary btn-sm" style="margin-left:8px">&#x1F4B0; Comprar Moedas</a></p>
+</div>
+<div class="card animate-in" style="margin-bottom:18px;padding:12px 16px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    {% for tipo, label in [('','Todos'),('borda','Bordas'),('efeito','Efeitos'),('badge','Badges'),('boost_xp','Boost XP'),('boost_moeda','Boost Moedas'),('streak_shield','Power-ups')] %}
+    <a href="{{ url_for('main.loja', tipo=tipo) }}" class="btn btn-sm {{ 'btn-primary' if tipo_filtro==tipo else 'btn-secondary' }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px">
+  {% for item in itens %}
+  <div class="loja-item-card raridade-{{ item.raridade }}" onclick="lojaCardClick({{ item.id }},'{{ item.nome }}','{{ item.tipo }}','{{ item.css_class or '' }}','{{ item.descricao }}')">
+    <div style="height:72px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;position:relative;overflow:hidden;border-radius:8px;background:rgba(255,255,255,.03)">
+      {% if item.tipo == 'borda' %}
+        <!-- Mini avatar com borda aplicada -->
+        <div class="{{ item.css_class }}" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">&#x1F60A;</div>
+      {% elif item.tipo == 'efeito' %}
+        <!-- Mini canvas de efeito -->
+        <div class="loja-efeito-mini" data-efeito="{{ item.css_class }}" style="position:absolute;inset:0;overflow:hidden;border-radius:8px"></div>
+        <div style="position:relative;z-index:1;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(255,255,255,.2)">&#x1F60A;</div>
+      {% elif item.imagem %}
+        <img src="{{ url_for('static', filename='data/loja/' + item.imagem) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="{{ item.nome }}" style="max-height:64px;max-width:100%;object-fit:contain;background:transparent">
+        <span style="display:none;font-size:38px">{% if item.tipo=='badge' %}&#x1F3C5;{% elif item.tipo=='boost_xp' %}&#x26A1;{% elif item.tipo=='boost_moeda' %}&#x1FA99;{% else %}&#x1F6E1;&#xFE0F;{% endif %}</span>
+      {% else %}
+        <span style="font-size:38px">{% if item.tipo=='badge' %}&#x1F3C5;{% elif item.tipo=='boost_xp' %}&#x26A1;{% elif item.tipo=='boost_moeda' %}&#x1FA99;{% else %}&#x1F6E1;&#xFE0F;{% endif %}</span>
+      {% endif %}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <span style="font-weight:700;font-size:13px">{{ item.nome }}</span>
+      <span class="badge-raridade {{ item.raridade }}">{{ item.raridade|capitalize }}</span>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);line-height:1.4">{{ item.descricao }}</p>
+    {% if item.duracao_h > 0 %}<div style="font-size:11px;color:var(--text-dim)">&#x23F1;&#xFE0F; {{ item.duracao_h }}h</div>{% endif %}
+    {% if item.valor_boost > 0 and 'boost' in item.tipo %}<div style="font-size:11px;color:var(--emerald)">+{{ item.valor_boost }}%</div>{% endif %}
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--gold)">{{ item.preco }} &#x1FA99;</div>
+    {% if item.id in inv_ids %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge badge-acerto" style="padding:5px 10px;font-size:12px">✓ Possuído</span>
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();usarItem({{ item.id }})">Equipar</button>
+    </div>
+    {% elif current_user.moedas >= item.preco %}
+    <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();comprarItem({{ item.id }},'{{ item.nome }}')">Comprar — {{ item.preco }} &#x1FA99;</button>
+    {% else %}
+    <button class="btn btn-secondary btn-full btn-sm" disabled style="opacity:.45;cursor:not-allowed">Moedas insuficientes</button>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% if not itens %}<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F6D2;</div><p>Nenhum item nesta categoria.</p></div></div>{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Preview types — open modal; others do nothing on card click
+const PREVIEW_TIPOS = ['borda','efeito','badge'];
+function lojaCardClick(id, nome, tipo, css, desc) {
+  if (PREVIEW_TIPOS.includes(tipo)) {
+    abrirPreview(id, nome, tipo, css, desc);
+  }
+}
+
+// Mini effect previews on loja cards
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.loja-efeito-mini').forEach(function(el) {
+    const efeito = el.dataset.efeito;
+    if (!efeito) return;
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+    el.appendChild(canvas);
+    canvas.width = el.offsetWidth || 210;
+    canvas.height = el.offsetHeight || 72;
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext('2d');
+    let running = true;
+    // Store for cleanup
+    el._stopEffect = () => { running = false; };
+
+    function particles(r,g,b,count) {
+      const ps = Array.from({length:count||18},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,rad:Math.random()*1.5+.5,a:Math.random()*.6+.2}));
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);ctx.fillStyle=`rgba(${r},${g},${b},${p.a})`;ctx.fill();});requestAnimationFrame(f);})();
+    }
+    function stars() {
+      const ss=Array.from({length:25},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,a:Math.random(),p:(Math.random()-.5)*.02}));
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);ss.forEach(s=>{s.a+=s.p;if(s.a>1||s.a<.05)s.p=-s.p;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.globalAlpha=s.a;ctx.fillStyle='#fff';ctx.fill();});ctx.globalAlpha=1;requestAnimationFrame(f);})();
+    }
+    function aurora() {
+      let t=0;
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);t+=.01;
+        const g=ctx.createLinearGradient(0,0,W,H);
+        g.addColorStop(0,`hsla(${(t*60)%360},80%,60%,.18)`);
+        g.addColorStop(.5,`hsla(${(t*60+120)%360},80%,60%,.12)`);
+        g.addColorStop(1,`hsla(${(t*60+240)%360},80%,60%,.18)`);
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+        requestAnimationFrame(f);})();
+    }
+    function fire() {
+      const ps=Array.from({length:15},()=>({x:Math.random()*W,y:H+5,vx:(Math.random()-.5)*.6,vy:-(Math.random()*1.2+.5),life:Math.random(),d:.015}));
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=p.d;if(p.life<=0){p.x=Math.random()*W;p.y=H+5;p.life=Math.random()*.7+.2;p.vx=(Math.random()-.5)*.6;p.vy=-(Math.random()*1.2+.5);}const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,7);g.addColorStop(0,`rgba(255,200,50,${p.life*.8})`);g.addColorStop(.4,`rgba(255,80,0,${p.life*.4})`);g.addColorStop(1,'rgba(255,0,0,0)');ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();});requestAnimationFrame(f);})();
+    }
+    function rain() {
+      const ds=Array.from({length:20},()=>({x:Math.random()*W,y:Math.random()*H,v:Math.random()*2+1.5,l:Math.random()*8+5,a:Math.random()*.4+.1}));
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);ds.forEach(d=>{ctx.beginPath();ctx.globalAlpha=d.a;ctx.strokeStyle='rgba(147,197,253,.9)';ctx.lineWidth=.6;ctx.moveTo(d.x,d.y);ctx.lineTo(d.x+d.l*.1,d.y+d.l);ctx.stroke();d.y+=d.v;if(d.y>H){d.y=-d.l;d.x=Math.random()*W;}});ctx.globalAlpha=1;requestAnimationFrame(f);})();
+    }
+    function matrix() {
+      canvas.style.opacity='.3';
+      const cols=Math.floor(W/9),drops=Array(cols).fill(0);
+      (function f(){if(!running)return;ctx.fillStyle='rgba(0,0,0,.06)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#0f0';ctx.font='8px monospace';drops.forEach((y,i)=>{ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96),i*9,y*9);if(y*9>H&&Math.random()>.975)drops[i]=0;drops[i]++;});setTimeout(()=>{if(running)requestAnimationFrame(f);},100);})();
+    }
+    function bokeh() {
+      const bs=Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*8+4,a:Math.random()*.3+.05,h:Math.random()*360,p:(Math.random()-.5)*.008}));
+      (function f(){if(!running)return;ctx.clearRect(0,0,W,H);bs.forEach(b=>{b.a+=b.p;if(b.a>.4||b.a<.03)b.p=-b.p;const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);g.addColorStop(0,`hsla(${b.h},80%,70%,${b.a})`);g.addColorStop(1,'transparent');ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();});requestAnimationFrame(f);})();
+    }
+
+    if(efeito==='efeito-particles-gold')   particles(251,191,36,18);
+    else if(efeito==='efeito-particles-purple') particles(168,85,247,18);
+    else if(efeito==='efeito-particles-blue')   particles(6,182,212,18);
+    else if(efeito==='efeito-cosmos')  stars();
+    else if(efeito==='efeito-aurora')  aurora();
+    else if(efeito==='efeito-matrix')  matrix();
+    else if(efeito==='efeito-fogo')    fire();
+    else if(efeito==='efeito-chuva')   rain();
+    else if(efeito==='efeito-bokeh')   bokeh();
+    else if(efeito==='efeito-trovao')  particles(250,204,21,20);
+    else particles(99,102,241,15);
+  });
+});
+</script>
+{% endblock %}

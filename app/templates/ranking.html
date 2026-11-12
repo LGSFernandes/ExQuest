@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Ranking{% endblock %}
+{% block content %}
+<div class="page-header animate-in"><h1>&#x1F3C6; Ranking</h1></div>
+
+<div class="card animate-in" style="margin-bottom:16px;padding:12px 16px">
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <select name="materia_id" class="form-control admin-select" style="width:auto;min-width:180px" onchange="this.form.submit()">
+      <option value="">&#x1F30E; Global (XP)</option>
+      {% for m in materias_all %}<option value="{{ m.id }}" {% if materia_id==m.id %}selected{% endif %}>{{ m.icone }} {{ m.nome }}</option>{% endfor %}
+    </select>
+    {% if materia_id %}<a href="{{ url_for('main.ranking') }}" class="btn btn-secondary btn-sm">✕ Limpar</a>{% endif %}
+  </form>
+</div>
+
+{% if posicao_atual %}
+<div class="card animate-in" style="margin-bottom:16px;border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.05)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:24px">&#x1F4CD;</span>
+    <div>
+      <div style="font-weight:700">Sua posição: <strong style="color:var(--primary-light)">#{{ posicao_atual }}</strong></div>
+      <div style="font-size:13px;color:var(--text-muted)">{{ current_user.xp }} XP · Nível {{ current_user.nivel }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card animate-in">
+  {% for u in usuarios %}
+  {% set rank = offset + loop.index %}
+  <div class="ranking-item rank-{{ rank }} {% if u.id==current_user.id %}me{% endif %}">
+    <span class="rank-pos">{% if rank==1 %}&#x1F947;{% elif rank==2 %}&#x1F948;{% elif rank==3 %}&#x1F949;{% else %}{{ rank }}{% endif %}</span>
+    <a href="{{ url_for('main.perfil', username=u.username) }}" style="text-decoration:none;display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+      <div class="user-avatar-sm {{ u.borda_ativa or '' }}" style="width:36px;height:36px;font-size:17px;flex-shrink:0">{{ avatar_display(u) }}</div>
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          {{ nick_html(u) }}
+          {% if u.id==current_user.id %}<span style="color:var(--primary-light);font-size:11px"> (você)</span>{% endif %}
+          {% if u.premium_ativo %}{% if u.plano_efetivo=='inter' %}<span class="badge-inter-glow" style="font-size:14px;margin-left:4px">&#x2728;</span>{% elif u.plano_efetivo=='advan' %}<span class="badge-advan-glow" style="font-size:14px;margin-left:4px">&#x1F48E;</span>{% endif %}{% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--text-dim)">@{{ u.username }} · Nv.{{ u.nivel }}</div>
+      </div>
+    </a>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-weight:700;color:var(--primary-light);font-family:var(--font-display)">{% if materia and pts_map.get(u.id) is not none %}{{ pts_map[u.id] }} acertos{% else %}{{ u.xp }} XP{% endif %}</div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if not usuarios %}
+  <div class="empty-state"><div class="empty-state-icon">&#x1F3C6;</div><p>Nenhum usuário nesta página.</p></div>
+  {% endif %}
+</div>
+
+<!-- Paginação -->
+{% if total_pages > 1 %}
+<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap" id="ranking-pagination">
+  {# Botão -10 páginas #}
+  {% if page > 1 %}
+  <a href="{{ url_for('main.ranking', page=[page-10,1]|max, materia_id=materia_id or '') }}" class="btn btn-secondary btn-sm" title="Voltar 10 páginas">«« -10</a>
+  <a href="{{ url_for('main.ranking', page=page-1, materia_id=materia_id or '') }}" class="btn btn-secondary btn-sm" title="Voltar 1 página">« -1</a>
+  {% else %}
+  <button class="btn btn-secondary btn-sm" disabled style="opacity:.3">«« -10</button>
+  <button class="btn btn-secondary btn-sm" disabled style="opacity:.3">« -1</button>
+  {% endif %}
+
+  {# Contador de páginas: anterior / atual / próxima #}
+  <div style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-muted)">
+    {% if page > 1 %}<span style="opacity:.5">{{ page - 1 }}</span>{% endif %}
+    <span style="font-weight:700;color:var(--text);background:rgba(99,102,241,.15);border-radius:6px;padding:3px 10px">{{ page }}</span>
+    {% if page < total_pages %}<span style="opacity:.5">{{ page + 1 }}</span>{% endif %}
+  </div>
+
+  {# Caixa de input para ir direto a uma página (aparece a partir da pág 5) #}
+  {% if page >= 5 or total_pages >= 5 %}
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+    <input type="number" id="goto-page-input" min="1" max="{{ total_pages }}" placeholder="..." 
+           style="width:64px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:13px;color:var(--text);text-align:center"
+           onkeydown="if(event.key==='Enter')goToPage()">
+    <button class="btn btn-secondary btn-sm" onclick="goToPage()">Ir</button>
+  </div>
+  {% endif %}
+
+  {# Botão +1 e +10 páginas #}
+  {% if page < total_pages %}
+  <a href="{{ url_for('main.ranking', page=page+1, materia_id=materia_id or '') }}" class="btn btn-secondary btn-sm" title="Avançar 1 página">+1 »</a>
+  <a href="{{ url_for('main.ranking', page=[page+10,total_pages]|min, materia_id=materia_id or '') }}" class="btn btn-secondary btn-sm" title="Avançar 10 páginas">+10 »»</a>
+  {% else %}
+  <button class="btn btn-secondary btn-sm" disabled style="opacity:.3">+1 »</button>
+  <button class="btn btn-secondary btn-sm" disabled style="opacity:.3">+10 »»</button>
+  {% endif %}
+
+  <span style="font-size:12px;color:var(--text-dim);margin-left:8px">de {{ total_pages }} páginas</span>
+</div>
+{% endif %}
+
+<script>
+function goToPage() {
+  const v = parseInt(document.getElementById('goto-page-input').value);
+  if (isNaN(v) || v < 1 || v > {{ total_pages }}) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('page', v);
+  window.location = url.toString();
+}
+</script>
+{% endblock %}
