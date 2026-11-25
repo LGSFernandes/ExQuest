@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf %}
+{% block titulo %}Comprar moedas — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Comprar moedas</h1><p>Moedas servem para personalizar o perfil na loja. Elas também são ganhas de graça ao acertar questões.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('loja.index') }}">{{ icone('store') }}Voltar à loja</a></div>
+{% if primeira %}<p class="tag tag-facil">{{ icone('gift') }}Primeira compra: o bônus do pacote vale em dobro</p>{% endif %}
+<form method="post" action="{{ url_for('pagamentos.checkout') }}" class="pilha pilha-l espaco-t">
+  {{ csrf() }}<input type="hidden" name="tipo" value="moedas">
+  {% include 'pagamentos/_provedor.html' %}
+  <div class="grade" data-vars="--min:14rem">
+  {% for k, p in pacotes.items() %}{% set extra = (p.bonus if primeira else 0) %}
+    <article class="folha pilha item-loja"><h2>{{ p.nome }}</h2>
+      <p class="estatistica"><strong>{{ p.moedas + p.bonus + extra }}</strong><span>moedas ({{ p.moedas }} + {{ p.bonus + extra }} de bônus)</span></p>
+      <div class="linha linha-entre item-rodape"><strong>{{ brl(p.preco) }}</strong>
+        <button class="btn btn-sm btn-alvo" type="submit" name="produto" value="{{ k }}" {% if not provs %}disabled{% endif %}>Comprar</button></div></article>
+  {% endfor %}
+  </div>
+</form>
+{% endblock %}

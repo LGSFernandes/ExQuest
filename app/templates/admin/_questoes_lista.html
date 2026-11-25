@@ -1,0 +1,11 @@
+{% from '_ui.html' import icone, vazio, paginacao %}
+{% if not pag.items %}{{ vazio('book-open', 'Nenhuma questão encontrada', 'Ajuste o filtro ou cadastre uma nova questão.', 'Nova questão', url_for('admin.questao_nova')) }}
+{% else %}
+<ul class="lista-marcada" data-katex>
+  {% for q in pag.items %}
+  <li><a href="{{ url_for('admin.questao_editar', qid=q.id) }}"><strong>#{{ q.id }}</strong> {{ q.enunciado|resumo(110) }}</a>
+    <span class="pauta-meta">{{ q.materia.nome }} · {{ q.dificuldade }} · {{ 'disponível' if q.ativo else 'oculta' }}</span></li>
+  {% endfor %}
+</ul>
+{{ paginacao(pag, 'admin.questoes', {'q': q, 'materia_id': materia_id}) }}
+{% endif %}

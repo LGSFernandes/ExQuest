@@ -1,0 +1,9 @@
+{% extends 'auth/_base.html' %}
+{% from '_ui.html' import campo, csrf %}
+{% block titulo %}Recuperar senha — ExQuest{% endblock %}
+{% block form %}
+<h1 id="auth-t">Recuperar senha</h1>
+<p class="muted">Informe o e-mail da conta e enviaremos um link para criar uma nova senha.</p>
+<form method="post" class="form" novalidate>{{ csrf() }}{{ campo(form.email, 'email', autocomplete='email') }}<button class="btn btn-block" type="submit">Enviar link</button></form>
+<p><a href="{{ url_for('auth.login') }}">Voltar para entrar</a></p>
+{% endblock %}

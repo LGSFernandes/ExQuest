@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf, avatar, nick %}
+{% block titulo %}{{ t.nome }} — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>{{ t.nome }}</h1>
+  <p>{{ t.config.label }} · {{ t.num_questoes }} questões · {{ t.tempo_minutos }} min para responder · {{ inscritos }} {{ 'inscrito' if inscritos == 1 else 'inscritos' }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('competicoes.index') }}">Voltar</a></div>
+{% if t.descricao %}<p class="folha">{{ t.descricao }}</p>{% endif %}
+<div class="folha pilha">
+  <p>Janela: {{ t.inicio|datahora }} até {{ t.fim|datahora }}. Prêmios: 1º {{ t.recompensa_xp_1 }} XP e {{ t.recompensa_moedas_1 }} moedas; 2º {{ t.recompensa_xp_2 }} XP e {{ t.recompensa_moedas_2 }}; 3º {{ t.recompensa_xp_3 }} XP e {{ t.recompensa_moedas_3 }}.</p>
+  {% if t.fase == 'cancelado' %}<p class="tag">Competição cancelada</p>
+  {% elif p and p.finalizado and t.status == 'aberto' %}<p>Prova enviada: {{ p.acertos }} de {{ t.num_questoes }} corretas. A classificação final sai quando a janela fechar.</p>
+  {% elif p and p.finalizado %}<p>Você terminou em {{ p.posicao }}º lugar com {{ p.acertos }} acertos.</p>
+  {% elif t.status != 'aberto' %}<p>Esta competição foi encerrada.</p>
+  {% elif p and p.iniciou_em %}<form method="post" action="{{ url_for('competicoes.comecar', tid=t.id) }}">{{ csrf() }}<button class="btn btn-primary" type="submit">{{ icone('play') }}Continuar a prova</button></form>
+  {% elif p and t.fase == 'agendado' %}<p>Inscrição confirmada. A prova libera em {{ t.inicio|datahora }}.</p>
+  {% elif p %}<form method="post" action="{{ url_for('competicoes.comecar', tid=t.id) }}" class="pilha">{{ csrf() }}
+    <p>Ao começar, seu tempo de {{ t.tempo_minutos }} minutos passa a contar e não pode ser pausado.</p>
+    <div><button class="btn btn-primary" type="submit" data-confirmar="Começar agora? O tempo de {{ t.tempo_minutos }} minutos começa a contar.">{{ icone('play') }}Começar a prova</button></div></form>
+  {% elif motivo %}<p>{{ motivo }}</p>
+  {% else %}<form method="post" action="{{ url_for('competicoes.entrar', tid=t.id) }}">{{ csrf() }}<button class="btn btn-primary" type="submit">{{ icone('swords') }}Participar</button></form>
+  {% endif %}
+</div>
+<section class="espaco-t"><h2>{{ 'Classificação final' if t.status == 'finalizado' else 'Classificação parcial' }}</h2>
+  {% if not ranking %}{{ vazio('trophy', 'Ninguém terminou ainda', 'A classificação aparece conforme os participantes enviam a prova.') }}
+  {% else %}<ol class="pauta">{% for r in ranking %}
+    <li><div class="pauta-item-link"><span class="tag">{{ loop.index }}º</span>{{ avatar(r.usuario, 'p') }}
+      <div class="pauta-corpo"><div class="pauta-titulo">{{ nick(r.usuario) }}{% if r.usuario_id == current_user.id %} (você){% endif %}</div>
+      <div class="pauta-meta">{{ r.acertos }} acertos · {{ r.pontuacao }} pontos{% if r.iniciou_em and r.terminou_em %} · {{ tempo(r)|int // 60 }} min {{ tempo(r)|int % 60 }} s{% endif %}</div></div></div></li>{% endfor %}</ol>
+  {% endif %}</section>
+{% endblock %}

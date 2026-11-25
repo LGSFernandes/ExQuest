@@ -1,269 +1,29 @@
-{% extends "base.html" %}
-{% block title %}Questões{% endblock %}
-{% block extra_css %}
-{% endblock %}
-{% block content %}
-<div class="page-header animate-in"><h1>&#x1F4A1; Questões Avulsas</h1><p>Pratique no seu ritmo.</p></div>
-
-{% if current_user.limite_questoes_dia %}
-<div class="card animate-in" style="margin-bottom:16px;padding:12px 16px">
-  <div style="display:flex;align-items:center;gap:12px;font-size:13px;flex-wrap:wrap">
-    <span style="color:var(--text-muted)">Questões hoje:</span>
-    <div class="progress-bar-wrap" style="flex:1;height:6px;min-width:80px"><div class="progress-bar-fill" style="width:{{ [(current_user.questoes_hoje / current_user.limite_questoes_dia * 100)|int, 100]|min }}%"></div></div>
-    <span style="color:var(--text-muted)">{{ current_user.questoes_hoje }}/{{ current_user.limite_questoes_dia }}
-      <strong style="color:{% if current_user.questoes_hoje >= current_user.limite_questoes_dia %}var(--rose){% else %}var(--emerald){% endif %}">
-        ({{ [current_user.limite_questoes_dia - current_user.questoes_hoje, 0]|max }} restantes)
-      </strong>
-    </span>
-    {% if current_user.questoes_hoje >= current_user.limite_questoes_dia %}
-    <button class="btn btn-secondary btn-sm" onclick="abrirVideoAd()">&#x25B6; +2 com anúncio</button>
-    <a href="{{ url_for('main.premium') }}" class="btn btn-primary btn-sm">&#x2B06;&#xFE0F; Upgrade</a>
-    {% endif %}
-  </div>
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf %}
+{% block titulo %}Questões — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Questões</h1>
+  <p>Escolha as matérias e responda uma por vez. O XP e as moedas valem na primeira vez que você acerta cada questão.</p></div>
+  {% if lim.limite is not none %}<p class="tag" aria-live="polite">{{ icone('zap') }}<span id="restante">{{ lim.restante }}</span>&nbsp;restantes hoje</p>{% endif %}
 </div>
-{% endif %}
 
-<div class="card animate-in" style="margin-bottom:20px;position:relative;z-index:100;overflow:visible">
-  <form method="GET" action="{{ url_for('main.questoes') }}" id="form-questoes">
-    {% if sessao_id %}<input type="hidden" name="sessao_id" value="{{ sessao_id }}">{% endif %}
-    <div class="questao-filtros">
-      <!-- Matérias multi-select chip -->
-      <div class="form-group">
-        <label class="form-label">Matérias (pode selecionar várias)</label>
-        <div class="multi-select-wrap" id="wrap-qmaterias">
-          <div class="multi-select-trigger" onclick="toggleDropdownQ('drop-qmaterias')" tabindex="0">
-            <span id="trigger-text-qmaterias">{% if materia_ids %}{{ materia_ids|length }} selecionada(s){% else %}Todas{% endif %}</span>
-            <span style="margin-left:auto;font-size:11px;opacity:.5">▼</span>
-          </div>
-          <div class="multi-select-dropdown" id="drop-qmaterias" style="display:none">
-            <div class="multi-select-option{% if not materia_ids %} selected{% endif %}" data-val="" onclick="toggleChipQ('qmaterias','','Todas',this)">Todas</div>
-            {% for m in materias %}
-            <div class="multi-select-option{% if m.id in materia_ids %} selected{% endif %}" data-val="{{ m.id }}" onclick="toggleChipQ('qmaterias','{{ m.id }}','{{ m.icone }} {{ m.nome }}',this)">{{ m.icone }} {{ m.nome }}</div>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="multi-chips-row" id="chips-qmaterias">
-          {% for m in materias %}{% if m.id in materia_ids %}<span class="multi-chip active" style="display:inline-flex;align-items:center;gap:5px;margin:4px 4px 0 0;padding:4px 10px;border-radius:99px;background:rgba(99,102,241,.18);color:var(--primary-light);font-size:12px;font-weight:600">{{ m.icone }} {{ m.nome }}<span onclick="removeChipQ('qmaterias','{{ m.id }}')" style="cursor:pointer;font-size:14px;line-height:1;margin-left:2px;opacity:.7">×</span></span>{% endif %}{% endfor %}
-        </div>
-        <input type="hidden" id="hidden-qmaterias" value="{{ materia_ids|join(',') if materia_ids else '' }}">
-      </div>
-      <!-- Dificuldades multi-select chip -->
-      <div class="form-group">
-        <label class="form-label">Dificuldades (pode selecionar várias)</label>
-        <div class="multi-select-wrap" id="wrap-qdificuldades">
-          <div class="multi-select-trigger" onclick="toggleDropdownQ('drop-qdificuldades')" tabindex="0">
-            <span id="trigger-text-qdificuldades">{% if dificuldades %}{{ dificuldades|length }} selecionada(s){% else %}Todas{% endif %}</span>
-            <span style="margin-left:auto;font-size:11px;opacity:.5">▼</span>
-          </div>
-          <div class="multi-select-dropdown" id="drop-qdificuldades" style="display:none">
-            <div class="multi-select-option{% if not dificuldades %} selected{% endif %}" data-val="" onclick="toggleChipQ('qdificuldades','','Todas',this)">Todas</div>
-            <div class="multi-select-option{% if 'facil' in dificuldades %} selected{% endif %}" data-val="facil" onclick="toggleChipQ('qdificuldades','facil','Fácil',this)">Fácil</div>
-            <div class="multi-select-option{% if 'medio' in dificuldades %} selected{% endif %}" data-val="medio" onclick="toggleChipQ('qdificuldades','medio','Médio',this)">Médio</div>
-            <div class="multi-select-option{% if 'dificil' in dificuldades %} selected{% endif %}" data-val="dificil" onclick="toggleChipQ('qdificuldades','dificil','Difícil',this)">Difícil</div>
-          </div>
-        </div>
-        <div class="multi-chips-row" id="chips-qdificuldades">
-          {% for d in dificuldades %}<span class="multi-chip active" style="display:inline-flex;align-items:center;gap:5px;margin:4px 4px 0 0;padding:4px 10px;border-radius:99px;background:rgba(99,102,241,.18);color:var(--primary-light);font-size:12px;font-weight:600">{{ d|capitalize }}<span onclick="removeChipQ('qdificuldades','{{ d }}')" style="cursor:pointer;font-size:14px;line-height:1;margin-left:2px;opacity:.7">×</span></span>{% endfor %}
-        </div>
-        <input type="hidden" id="hidden-qdificuldades" value="{{ dificuldades|join(',') if dificuldades else '' }}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tipo</label>
-        <select name="tipo" class="form-control admin-select" style="min-width:150px">
-          <option value="" {% if not tipo_q %}selected{% endif %}>Todos</option>
-          <option value="multipla"   {% if tipo_q=='multipla'   %}selected{% endif %}>&#x1F4CB; Múltipla Escolha</option>
-          <option value="discursiva" {% if tipo_q=='discursiva' %}selected{% endif %}>&#x1F4DD; Discursiva</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tópico</label>
-        <input type="text" name="conteudo" class="form-control" value="{{ conteudo }}" placeholder="Ex: Álgebra..." style="min-width:130px">
-      </div>
-      <button type="submit" class="btn btn-primary" style="align-self:flex-end">&#x1F3B2; Nova Questão</button>
-    </div>
-  </form>
-</div>
-<script>
-const qState = {};
-// Init state from preselected
-(function(){
-  ['qmaterias','qdificuldades'].forEach(g => {
-    qState[g] = [];
-    const hidden = document.getElementById('hidden-' + g);
-    if(hidden && hidden.value) {
-      hidden.value.split(',').filter(Boolean).forEach(v => {
-        const opt = document.querySelector(`#drop-${g} .multi-select-option[data-val="${v}"]`);
-        if(opt) qState[g].push({val:v, label:opt.textContent.trim()});
-      });
-    }
-  });
-})();
+<form method="get" class="folha pilha" data-filtros>
+  <input type="hidden" name="sessao_id" value="{{ sessao_id }}">
+  {% include 'questoes/_filtros.html' %}
+  <div class="linha"><button class="btn" type="submit">{{ icone('search') }}Buscar questão</button>
+    <a class="btn btn-ghost" href="{{ url_for('questoes.index') }}">Limpar</a></div>
+</form>
 
-function toggleDropdownQ(dropId) {
-  const drop = document.getElementById(dropId);
-  const isOpen = drop.style.display !== 'none';
-  document.querySelectorAll('.multi-select-dropdown').forEach(d => { d.style.display='none'; });
-  document.querySelectorAll('.multi-select-wrap').forEach(w => w.classList.remove('open'));
-  if (!isOpen) {
-    drop.style.display = 'block';
-    drop.closest('.multi-select-wrap').classList.add('open');
-    const opts = drop.querySelectorAll('.multi-select-option');
-    if (opts.length > 6) drop.classList.add('grid-layout');
-    else drop.classList.remove('grid-layout');
-  }
-}
-document.addEventListener('click', function(e) {
-  if(!e.target.closest('.multi-select-wrap')) {
-    document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display='none');
-    document.querySelectorAll('.multi-select-wrap').forEach(w => w.classList.remove('open'));
-  }
-});
-function toggleChipQ(group, val, label, optEl) {
-  if(!qState[group]) qState[group] = [];
-  const idx = qState[group].findIndex(x => x.val === val);
-  if(idx >= 0) { qState[group].splice(idx,1); optEl.classList.remove('selected'); }
-  else {
-    if(val === '') { qState[group]=[]; document.querySelectorAll(`#drop-${group} .multi-select-option`).forEach(o=>o.classList.remove('selected')); }
-    else { const ai=qState[group].findIndex(x=>x.val===''); if(ai>=0){qState[group].splice(ai,1);document.querySelector(`#drop-${group} .multi-select-option[data-val=""]`)?.classList.remove('selected');} }
-    qState[group].push({val,label}); optEl.classList.add('selected');
-  }
-  renderChipsQ(group);
-}
-function renderChipsQ(group) {
-  const row = document.getElementById('chips-' + group);
-  const hidden = document.getElementById('hidden-' + group);
-  const tt = document.getElementById('trigger-text-' + group);
-  if(!row) return;
-  const items = qState[group] || [];
-  if(items.length === 0) { row.innerHTML=''; tt.textContent='Todas'; hidden.value=''; return; }
-  tt.textContent = items.length + ' selecionada(s)';
-  row.innerHTML = items.map(item => `<span class="multi-chip active" style="display:inline-flex;align-items:center;gap:5px;margin:4px 4px 0 0;padding:4px 10px;border-radius:99px;background:rgba(99,102,241,.18);color:var(--primary-light);font-size:12px;font-weight:600">${item.label}<span onclick="removeChipQ('${group}','${item.val}')" style="cursor:pointer;font-size:14px;line-height:1;margin-left:2px;opacity:.7">×</span></span>`).join('');
-  hidden.value = items.map(x=>x.val).filter(v=>v!=='').join(',');
-}
-function removeChipQ(group, val) {
-  const idx = qState[group]?.findIndex(x=>x.val===val);
-  if(idx>=0){ qState[group].splice(idx,1); document.querySelector(`#drop-${group} .multi-select-option[data-val="${val}"]`)?.classList.remove('selected'); renderChipsQ(group); }
-}
-document.getElementById('form-questoes')?.addEventListener('submit', function(e) {
-  [['qmaterias','materia_id'],['qdificuldades','dificuldade']].forEach(([g,paramName]) => {
-    document.getElementById('hidden-'+g).removeAttribute('name');
-    (qState[g]||[]).filter(x=>x.val!=='').forEach(item => {
-      const inp=document.createElement('input'); inp.type='hidden'; inp.name=paramName; inp.value=item.val; this.appendChild(inp);
-    });
-  });
-});
-</script>
-
-{% if questao %}
-<div class="questao-card animate-in" id="questao-avulsa" data-questao-id="{{ questao.id }}" style="position:relative;z-index:1">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-    <span class="questao-numero">{{ questao.materia.icone }} {{ questao.materia.nome }}</span>
-    <span class="badge badge-{{ questao.dificuldade }}">{{ questao.dificuldade|capitalize }}</span>
-    {% if questao.tipo == 'discursiva' %}<span class="badge" style="background:rgba(99,102,241,.15);color:var(--primary-light)">&#x1F4DD; Discursiva</span>{% endif %}
-    {% if questao.conteudo %}<span style="font-size:12px;color:var(--text-dim)">{{ questao.conteudo }}</span>{% endif %}
-    <span style="margin-left:auto;font-size:12px;color:var(--text-dim)">&#x26A1; {{ questao.xp_recompensa[0] }}-{{ questao.xp_recompensa[1] }} XP</span>
-  </div>
-  <div class="questao-enunciado latex-render">{{ questao.enunciado }}</div>
-  {% if questao.imagem_path %}
-  <img src="{{ url_for('static', filename='data/img_questao/' + questao.imagem_path) }}" alt="Imagem" class="questao-img" style="background:transparent">
-  {% endif %}
-  {% if questao.tipo == 'multipla' %}
-  <div class="alternativas-grid" id="alt-grid">
-    {% set letras = ['A','B','C','D'] %}
-    {% for alt in questao.alternativas %}
-    <button class="alternativa-btn" data-alternativa-id="{{ alt.id }}" type="button" onclick="selecionarAvulsa(this)">
-      <span class="alternativa-letra">{{ letras[loop.index0] }}</span>
-      <span class="latex-render">{{ alt.texto }}</span>
-    </button>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="discursiva-box">
-    <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">&#x1F4DD; Sua resposta:</label>
-    <textarea id="resposta-discursiva" class="form-control" rows="5" placeholder="Escreva sua resposta aqui..."></textarea>
-  </div>
-  {% endif %}
-  <div class="resultado-box" id="resultado-avulsa"></div>
-  <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
-    <button id="btn-confirmar-avulsa" class="btn btn-secondary" onclick="confirmarAvulsa()" disabled>
-      {% if questao.tipo == 'discursiva' %}Enviar para IA avaliar{% else %}Selecione uma alternativa{% endif %}
-    </button>
-    <a href="{{ url_for('main.questoes', sessao_id=sessao_id) }}{% for mid in materia_ids %}&materia_id={{ mid }}{% endfor %}{% for d in dificuldades %}&dificuldade={{ d }}{% endfor %}{% if conteudo %}&conteudo={{ conteudo }}{% endif %}{% if tipo_q %}&tipo={{ tipo_q }}{% endif %}"
-       class="btn btn-primary" id="btn-proxima" style="display:none">&#x27A1;&#xFE0F; Próxima</a>
-  </div>
-</div>
-<script>
-const QUESTAO_ID   = {{ questao.id }};
-const TIPO_QUESTAO = '{{ questao.tipo }}';
-const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]').content;
-const SESSAO_ID    = '{{ sessao_id }}';
-let altSelecionada = null;
-function selecionarAvulsa(btn) {
-  if(btn.disabled) return;
-  document.querySelectorAll('.alternativa-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected'); altSelecionada = btn.dataset.alternativaId;
-  const cb=document.getElementById('btn-confirmar-avulsa');
-  cb.disabled=false; cb.className='btn btn-primary'; cb.textContent='Confirmar Resposta';
-}
-{% if questao.tipo == 'discursiva' %}
-document.getElementById('resposta-discursiva')?.addEventListener('input',function(){
-  const cb=document.getElementById('btn-confirmar-avulsa');
-  if(this.value.trim().length>3){cb.disabled=false;cb.className='btn btn-primary';}
-  else{cb.disabled=true;cb.className='btn btn-secondary';}
-});
-{% endif %}
-async function confirmarAvulsa(){
-  const cb=document.getElementById('btn-confirmar-avulsa'); cb.disabled=true;
-  let url,body;
-  const tsInicio=window._tsInicio||Date.now();
-  const tempoResp=Math.round((Date.now()-tsInicio)/1000);
-  if(TIPO_QUESTAO==='multipla'){
-    if(!altSelecionada)return;
-    url='/api/responder'; body={questao_id:QUESTAO_ID,alternativa_id:parseInt(altSelecionada),modo:'questao',sessao_id:SESSAO_ID,tempo_segundos:tempoResp};
-    cb.textContent='Verificando…';
-  } else {
-    const txt=document.getElementById('resposta-discursiva')?.value?.trim();
-    if(!txt){cb.disabled=false;return;}
-    url='/api/responder-discursiva'; body={questao_id:QUESTAO_ID,resposta_texto:txt,modo:'questao',sessao_id:SESSAO_ID};
-    cb.textContent='Avaliando com IA…';
-  }
-  try{
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify(body)});
-    const data=await res.json();
-    if(data.limite){showToast('\u{26A0}\u{FE0F} Limite diário atingido!','warning');cb.disabled=false;cb.textContent='Confirmar';return;}
-    const box=document.getElementById('resultado-avulsa');
-    box.style.display='block';
-    if(TIPO_QUESTAO==='multipla'){
-      document.querySelectorAll('.alternativa-btn').forEach(b=>{
-        b.disabled=true;
-        const bid=String(b.dataset.alternativaId),letra=b.querySelector('.alternativa-letra');
-        if(bid===String(data.alternativa_correta_id)){b.classList.add('correta');if(letra)letra.textContent='✓';}
-        else if(bid===String(altSelecionada)&&!data.acertou){b.classList.add('errada');if(letra)letra.textContent='✗';}
-      });
-      box.className=`resultado-box ${data.acertou?'acerto':'erro'}`;
-      box.innerHTML=`<strong>${data.acertou?'\u{1F389} Correto!':'\u{1F614} Incorreto!'}</strong>${data.acertou?`<div class="resultado-recompensa mt-8"><span class="recompensa-chip">\u{26A1} +${data.xp_ganho} XP</span><span class="recompensa-chip">\u{1FA99} +${data.moedas_ganhas}</span></div>`:''}${data.explicacao?`<p class="mt-8" style="font-size:13px;opacity:.85">${data.explicacao}</p>`:''}`;
-    } else {
-      const nota=data.nota_ia||0,barColor=nota>=70?'var(--emerald)':nota>=40?'var(--gold)':'var(--rose)';
-      box.className=`resultado-box ${data.acertou?'acerto':'erro'}`;
-      box.innerHTML=`<strong>${data.acertou?'\u{1F389} Correto!':'\u{1F4DD} Incorreto'}</strong><div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Pontuação IA</span><span style="font-weight:700">${nota}%</span></div><div style="background:rgba(255,255,255,.06);border-radius:99px;height:6px"><div style="width:${nota}%;height:100%;background:${barColor};border-radius:99px;transition:width .8s ease"></div></div></div>${data.feedback?`<p style="margin-top:10px;font-size:13px;opacity:.9">\u{1F4AC} ${data.feedback}</p>`:''}${data.acertou?`<div class="resultado-recompensa mt-8"><span class="recompensa-chip">\u{26A1} +${data.xp_ganho} XP</span><span class="recompensa-chip">\u{1FA99} +${data.moedas_ganhas}</span></div>`:''}`;
-      document.getElementById('resposta-discursiva').disabled=true;
-    }
-    if(data.recompensa_nivel){showToast(`\u{1F389} Nível ${data.recompensa_nivel.nivel}! +${data.recompensa_nivel.moedas} \u{1FA99}`,'success');}
-    cb.textContent=data.acertou?'✓ Acertou!':'Avaliado'; cb.className=`btn ${data.acertou?'btn-secondary':'btn-danger'}`;
-    document.getElementById('btn-proxima').style.display='inline-flex';
-  } catch(err){cb.disabled=false;cb.textContent='Confirmar Resposta';showToast('Erro ao enviar.','danger');}
-}
-window._tsInicio=Date.now();
-</script>
-{% elif materia_ids or conteudo or tipo_q %}
-<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F50D;</div><p>Nenhuma questão encontrada com esses filtros.</p><a href="{{ url_for('main.questoes') }}" class="btn btn-secondary" style="margin-top:14px">Limpar filtros</a></div></div>
-{% else %}
-<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F446;</div><p>Selecione uma matéria para começar!</p></div></div>
+{% if request.args.get('sessao_id') and not materia_ids and not colecao %}<p class="erro-campo espaco-t" role="alert">{{ icone('circle-x') }}Escolha ao menos uma matéria para buscar questões.</p>{% endif %}
+{% if colecao %}<p class="tag espaco-t">{{ icone('bookmark') }}Praticando a coleção {{ colecao.nome }}</p>{% endif %}
+{% if (materia_ids or colecao) and not questao %}
+  <div class="espaco-t">{{ vazio('circle-check', 'Sem mais questões neste filtro', 'Você respondeu todas as que combinam com estes filtros nesta sessão. Amplie as matérias ou mude a dificuldade.') }}</div>
+{% elif questao %}
+{% with url_responder=url_for('questoes.responder_discursiva' if questao.tipo == 'discursiva' else 'questoes.responder'),
+        legenda=disponiveis ~ (' questão' if disponiveis == 1 else ' questões') ~ ' neste filtro',
+        proxima_url=url_for('questoes.index', colecao_id=colecao.id if colecao else None, materia_id=materia_ids, dificuldade=dificuldades, conteudo=conteudo or None, tipo=tipo or None, sessao_id=sessao_id) %}{% include 'questoes/_cartao.html' %}{% endwith %}
 {% endif %}
 {% endblock %}
-{% block extra_js %}
-<script>
-// KaTeX handled globally; re-render for dynamic content
-document.addEventListener('DOMContentLoaded', function(){ if(typeof _renderKaTeX==='function') _renderKaTeX(document.body); });
-</script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/questoes.js') }}" defer></script>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf, campo %}
+{% block titulo %}{{ 'Editar matéria' if materia else 'Nova matéria' }} — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><h1>{{ 'Editar matéria' if materia else 'Nova matéria' }}</h1></div>
+<form method="post" class="folha pilha" novalidate>
+  {{ csrf() }}
+  {{ campo(form.nome) }}
+  {{ campo(form.icone_chave, classe='selecao') }}
+  {{ campo(form.cor) }}
+  <label class="marcar">{{ form.ativo() }}<span>{{ form.ativo.label.text }}</span></label>
+  <div class="linha"><button class="btn btn-primary" type="submit">{{ icone('check') }}Salvar</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.materias') }}">Cancelar</a></div>
+</form>
+{% endblock %}

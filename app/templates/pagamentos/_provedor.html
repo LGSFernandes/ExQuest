@@ -1,0 +1,8 @@
+{% from '_ui.html' import icone %}
+{% if not provs %}
+<div class="folha linha" role="status">{{ icone('info') }}<p>Os pagamentos ainda não estão ativos neste ambiente: nenhum provedor foi configurado. Defina as credenciais no arquivo <code>.env</code> (veja o tutorial de serviços externos).</p></div>
+{% else %}
+<fieldset class="campo"><legend class="rotulo">Forma de pagamento</legend>
+  <div class="linha">{% for p in provs %}<label class="chip"><input type="radio" name="provider" value="{{ p }}" {% if loop.first %}checked{% endif %} required><span>{{ nomes[p] }}</span></label>{% endfor %}</div>
+  <p class="pauta-meta">Você paga no ambiente seguro do provedor. O ExQuest não vê nem guarda dados de cartão.</p></fieldset>
+{% endif %}

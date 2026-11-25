@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, avatar, nick, vazio, csrf %}
+{% block titulo %}Amigos — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Amigos</h1>
+  <p>{{ total }}{% if limite is not none %} de {{ limite }}{% endif %} {{ 'amigo' if total == 1 else 'amigos' }}. Seu identificador é <strong>{{ current_user.username }}#{{ current_user.tag_custom or current_user.tag }}</strong>.</p></div></div>
+
+<form method="post" action="{{ url_for('social.pedir') }}" class="folha linha">
+  {{ csrf() }}
+  <div class="campo"><label for="alvo">Adicionar por identificador</label><input id="alvo" class="entrada" name="alvo" placeholder="usuario#0000" maxlength="60" required autocomplete="off"></div>
+  <button class="btn" type="submit">{{ icone('user-plus') }}Enviar pedido</button>
+</form>
+
+{% if recebidos %}
+<section class="folha pilha espaco-t" aria-labelledby="h-rec"><h2 id="h-rec">Pedidos recebidos</h2>
+  <ul class="pilha">{% for r in recebidos %}
+    <li class="linha linha-entre"><span class="linha">{{ avatar(r.solicitante) }}<a href="{{ url_for('perfil.ver', username=r.solicitante.username) }}">{{ nick(r.solicitante) }}</a></span>
+      <span class="linha">
+        <form method="post" action="{{ url_for('social.aceitar', aid=r.id) }}">{{ csrf() }}<button class="btn btn-sm" type="submit">{{ icone('check') }}Aceitar</button></form>
+        <form method="post" action="{{ url_for('social.recusar', aid=r.id) }}">{{ csrf() }}<button class="btn btn-ghost btn-sm" type="submit">Recusar</button></form></span></li>
+  {% endfor %}</ul></section>
+{% endif %}
+
+<section class="folha pilha espaco-t" aria-labelledby="h-am"><h2 id="h-am">Seus amigos</h2>
+  {% if not amigos %}{{ vazio('users', 'Você ainda não tem amigos', 'Envie um pedido usando o identificador de quem você quer adicionar.') }}
+  {% else %}<ul class="pilha">{% for a in amigos %}
+    <li class="linha linha-entre"><span class="linha">{{ avatar(a) }}<a href="{{ url_for('perfil.ver', username=a.username) }}">{{ nick(a) }}</a><span class="pauta-meta">Nível {{ a.nivel }}</span></span>
+      <span class="linha">
+        <form method="post" action="{{ url_for('social.conversar', uid=a.id) }}">{{ csrf() }}<button class="btn btn-ghost btn-sm" type="submit">{{ icone('message-circle') }}Conversar</button></form>
+        <form method="post" action="{{ url_for('social.remover', uid=a.id) }}" data-confirmar="Desfazer a amizade com {{ a.nome }}?">{{ csrf() }}<button class="btn btn-quiet btn-sm" type="submit">{{ icone('user-x') }}Desfazer</button></form>
+        <form method="post" action="{{ url_for('social.bloquear', uid=a.id) }}" data-confirmar="Bloquear {{ a.nome }}? A amizade e as conversas diretas serão encerradas.">{{ csrf() }}<button class="btn btn-quiet btn-sm" type="submit">{{ icone('ban') }}Bloquear</button></form></span></li>
+  {% endfor %}</ul>{% endif %}</section>
+
+{% if enviados %}
+<section class="folha pilha espaco-t" aria-labelledby="h-env"><h2 id="h-env">Pedidos enviados</h2>
+  <ul class="pilha">{% for r in enviados %}
+    <li class="linha linha-entre"><span>{{ r.destinatario.nome }} <span class="pauta-meta">@{{ r.destinatario.username }}</span></span>
+      <form method="post" action="{{ url_for('social.desfazer', aid=r.id) }}">{{ csrf() }}<button class="btn btn-ghost btn-sm" type="submit">Cancelar pedido</button></form></li>
+  {% endfor %}</ul></section>
+{% endif %}
+
+{% if bloqueados %}
+<section class="folha pilha espaco-t" aria-labelledby="h-blq"><h2 id="h-blq">Bloqueados</h2>
+  <ul class="pilha">{% for b in bloqueados %}
+    <li class="linha linha-entre"><span>{{ b.nome }} <span class="pauta-meta">@{{ b.username }}</span></span>
+      <form method="post" action="{{ url_for('social.desbloquear', uid=b.id) }}">{{ csrf() }}<button class="btn btn-ghost btn-sm" type="submit">Desbloquear</button></form></li>
+  {% endfor %}</ul></section>
+{% endif %}
+{% endblock %}

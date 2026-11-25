@@ -1,0 +1,45 @@
+{% from '_ui.html' import icone %}
+<article class="folha pilha espaco-t" id="questao" data-questao="{{ questao.id }}" data-sessao="{{ sessao_id }}"
+         data-url="{{ url_responder }}">
+  <header class="linha linha-entre">
+    <p class="linha">
+      <span class="tag">{{ icone(questao.materia.icone_chave or 'book') }}{{ questao.materia.nome }}</span>
+      <span class="tag tag-{{ questao.dificuldade }}">{{ {'facil':'Fácil','medio':'Média','dificil':'Difícil'}.get(questao.dificuldade, questao.dificuldade) }}</span>
+      {% if questao.conteudo %}<span class="tag">{{ questao.conteudo }}</span>{% endif %}
+    </p>
+    <p class="linha"><span class="pauta-meta">{{ legenda }}</span>
+    {% if salvar %}<details class="menu-salvar" data-salvar data-url="{{ url_for('colecoes.api_definir', qid=questao.id) }}">
+      <summary class="btn btn-ghost btn-sm">{{ icone('bookmark') }}Salvar</summary>
+      <div class="folha pilha" role="group" aria-label="Salvar em coleção">
+        {% for c in salvar.lista %}<label class="marcar"><input type="checkbox" value="{{ c.id }}" {% if c.id in salvar.marcadas %}checked{% endif %}><span>{{ c.nome }}</span></label>{% endfor %}
+        <p class="pauta-meta" data-salvar-msg aria-live="polite"></p>
+      </div></details>{% endif %}</p>
+  </header>
+  <div class="enunciado" data-katex>{{ questao.enunciado }}
+    {% if questao.imagem_path %}<img src="{{ url_for('static', filename='data/img_questao/' ~ questao.imagem_path) }}" alt="Imagem da questão" loading="lazy">{% endif %}</div>
+
+  {% if questao.tipo == 'discursiva' %}
+  <div class="campo"><label for="resp-texto">Sua resposta</label>
+    <textarea id="resp-texto" class="area" rows="6" maxlength="2000" data-resposta></textarea>
+    <p class="pauta-meta">Até 2000 caracteres. A correção compara sua resposta com o gabarito.</p></div>
+  {% else %}
+  <fieldset class="gabarito" data-gabarito><legend class="rotulo">Alternativas</legend>
+    {% for a in questao.alternativas %}
+    <label class="opcao" data-alt="{{ a.id }}"><input type="radio" name="alt" value="{{ a.id }}">
+      <span class="bolha" aria-hidden="true">{{ 'ABCDEFGH'[loop.index0] }}</span>
+      <span class="opcao-texto" data-katex>{{ a.texto }}</span>
+      <span class="opcao-sinal" aria-hidden="true"></span></label>
+    {% endfor %}
+  </fieldset>
+  {% endif %}
+
+  <div class="linha" id="acoes"><button class="btn" type="button" data-enviar disabled>Responder</button>
+    <a class="btn btn-ghost" href="{{ proxima_url }}">Pular</a></div>
+
+  <div id="resultado" class="pilha" aria-live="polite" hidden>
+    <p class="linha"><strong id="res-titulo"></strong><span class="recompensa-ganha" id="res-ganhos"></span></p>
+    <p id="res-feedback"></p>
+    <div class="explicacao" id="res-explicacao" data-katex hidden></div>
+    <a class="btn" id="proxima" href="{{ proxima_url }}">Próxima questão {{ icone('arrow-right') }}</a>
+  </div>
+</article>

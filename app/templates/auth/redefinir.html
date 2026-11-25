@@ -1,0 +1,11 @@
+{% extends 'auth/_base.html' %}
+{% from '_ui.html' import campo, csrf %}
+{% block titulo %}Nova senha — ExQuest{% endblock %}
+{% block form %}
+<h1 id="auth-t">Criar nova senha</h1>
+<form method="post" class="form" novalidate>{{ csrf() }}
+  {{ campo(form.nova_senha, 'password', ajuda='Mínimo de 8 caracteres.', autocomplete='new-password') }}
+  {{ campo(form.confirmar_senha, 'password', autocomplete='new-password') }}
+  <button class="btn btn-block" type="submit">Salvar nova senha</button>
+</form>
+{% endblock %}

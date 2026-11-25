@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio %}
+{% block titulo %}Revisão — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Revisão</h1><p>As questões que você errou voltam aqui. Cada acerto espaça o próximo encontro; um erro reinicia o ciclo. Revisar não gasta seu limite diário.</p></div>
+  <p class="tag">{{ icone('repeat') }}{{ devidas }} {{ 'questão' if devidas == 1 else 'questões' }} para hoje</p></div>
+{% if not questao %}{{ vazio('circle-check', 'Nada para revisar agora', 'Quando você errar uma questão, ela volta aqui no dia seguinte.', 'Ir às questões', url_for('questoes.index')) }}
+{% else %}{% with url_responder=url_for('revisao.responder'), legenda='Revisão', proxima_url=url_for('revisao.index'), sessao_id='' %}{% include 'questoes/_cartao.html' %}{% endwith %}{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/questoes.js') }}" defer></script>
+{% endblock %}

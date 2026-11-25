@@ -1,110 +1,25 @@
-{% extends "base.html" %}
-{% block title %}Competições{% endblock %}
-{% block content %}
-<div class="page-header animate-in">
-  <h1>&#x1F3C6; Competições</h1>
-  <p>Torne-se o melhor do ExQuest nos torneios!</p>
-</div>
-
-{% if not current_user.pode_competicoes %}
-<div class="card animate-in" style="margin-bottom:24px;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.04)">
-  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-    <span style="font-size:40px">&#x1F512;</span>
-    <div style="flex:1">
-      <h3 style="font-size:16px;margin-bottom:4px">Competições disponíveis a partir do Premium</h3>
-      <p style="font-size:13px;color:var(--text-muted)">Intermediário: 3 torneios/mês · Avançado: ilimitado</p>
-    </div>
-    <a href="{{ url_for('main.premium') }}" class="btn btn-primary">Ver Planos</a>
-  </div>
-</div>
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio %}
+{% block titulo %}Competições — ExQuest{% endblock %}
+{% macro item(t) %}
+<li><a class="pauta-item-link" href="{{ url_for('competicoes.ver', tid=t.id) }}">
+  <div class="pauta-corpo"><div class="pauta-titulo">{{ t.nome }}</div>
+  <div class="pauta-meta">{{ t.config.label }} · {{ t.num_questoes }} questões · {{ t.tempo_minutos }} min · {{ t.inicio|datahora }} a {{ t.fim|datahora }}</div></div>
+  {% set p = minhas[t.id] %}
+  <span class="tag">{% if t.fase == 'agendado' %}Agendada{% elif t.fase == 'em_andamento' %}{{ 'Inscrito' if p else 'Aberta' }}{% elif t.fase == 'encerrado' %}Apurando{% else %}{{ ('Você: ' ~ p.posicao ~ 'º') if p and p.posicao else 'Encerrada' }}{% endif %}</span>
+  {{ icone('chevron-right') }}</a></li>
+{% endmacro %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Competições</h1>
+  <p>Todos recebem as mesmas questões. Vence quem acerta mais e, em empate, quem termina mais rápido.</p></div>
+  {% if teto is not none %}<p class="tag">{{ icone('swords') }}{{ usadas }} de {{ teto }} participações no mês</p>{% endif %}</div>
+{% if not current_user.pode('competicoes') %}
+<div class="folha pilha"><h2>Disponível a partir do plano Intermediário</h2>
+  <p>Você pode acompanhar as competições e os rankings, mas para participar é preciso um plano com competições.</p>
+  <div><a class="btn btn-primary" href="{{ url_for('pagamentos.premium_pagina') }}">Ver planos</a></div></div>
 {% endif %}
-
-<!-- Torneios Abertos -->
-{% if abertos %}
-<h3 class="animate-in" style="font-size:16px;margin-bottom:14px">&#x1F7E2; Abertos para inscrição</h3>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:28px">
-  {% for t in abertos %}
-  {% set cfg = {'micro':{'icone':'\U000026A1','label':'Micro'},'pequeno':{'icone':'\U0001F3AF','label':'Pequeno'},'medio':{'icone':'\U0001F3C5','label':'Médio'},'grande':{'icone':'\U0001F3C6','label':'Grande'},'mega':{'icone':'\U0001F451','label':'Mega'}} %}
-  {% set info = cfg.get(t.tipo, cfg.pequeno) %}
-  <div class="torneio-card torneio-{{ t.tipo }} animate-in">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <span class="torneio-badge-tipo {{ t.tipo }}">{{ info.icone }} {{ info.label }}</span>
-      <span style="font-size:12px;color:var(--text-muted)">{{ t.num_questoes }} questões · {{ t.tempo_minutos }}min</span>
-    </div>
-    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">{{ t.nome }}</h3>
-    {% if t.descricao %}<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">{{ t.descricao }}</p>{% endif %}
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <span style="font-size:12px;color:var(--text-muted)">&#x1F550; {{ t.inicio.strftime('%d/%m %H:%M') }} → {{ t.fim.strftime('%d/%m %H:%M') }}</span>
-    </div>
-    <div style="display:flex;gap:8px;font-size:12px;margin-bottom:16px;flex-wrap:wrap">
-      <span style="color:var(--gold)">&#x1F947; {{ t.recompensa_xp_1 }} XP · {{ t.recompensa_moedas_1 }} &#x1FA99;</span>
-      <span style="color:var(--text-muted)">&#x1F948; {{ t.recompensa_xp_2 }} XP</span>
-      <span style="color:var(--text-muted)">&#x1F949; {{ t.recompensa_xp_3 }} XP</span>
-    </div>
-    {% if t.id in minhas_ids %}
-    <a href="{{ url_for('main.competicao_detalhe', torneio_id=t.id) }}" class="btn btn-primary btn-full btn-sm">&#x25B6; Entrar no Torneio</a>
-    {% elif current_user.pode_competicoes %}
-    <button class="btn btn-secondary btn-full btn-sm" onclick="inscreverTorneio({{ t.id }}, this)">+ Inscrever-se</button>
-    {% else %}
-    <button class="btn btn-secondary btn-full btn-sm" disabled style="opacity:.5">&#x1F512; Premium necessário</button>
-    {% endif %}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-<!-- Ativos -->
-{% if ativos %}
-<h3 class="animate-in" style="font-size:16px;margin-bottom:14px">&#x1F534; Em andamento</h3>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px">
-  {% for t in ativos %}
-  <div class="torneio-card torneio-{{ t.tipo }} animate-in">
-    <h3 style="font-size:15px;font-weight:700;margin-bottom:8px">{{ t.nome }}</h3>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">{{ t.participantes.count() }} participantes</p>
-    {% if t.id in minhas_ids %}
-    <a href="{{ url_for('main.competicao_detalhe', torneio_id=t.id) }}" class="btn btn-primary btn-full btn-sm">&#x25B6; Continuar</a>
-    {% endif %}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-<!-- Finalizados -->
-{% if finalizados %}
-<h3 class="animate-in" style="font-size:16px;margin-bottom:14px">&#x2705; Finalizados</h3>
-<div style="display:flex;flex-direction:column;gap:10px">
-  {% for t in finalizados %}
-  <div class="card animate-in" style="padding:16px">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <div>
-        <span style="font-weight:600">{{ t.nome }}</span>
-        <span style="font-size:12px;color:var(--text-dim);margin-left:8px">{{ t.fim.strftime('%d/%m/%Y') }}</span>
-      </div>
-      <a href="{{ url_for('main.competicao_detalhe', torneio_id=t.id) }}" class="btn btn-secondary btn-sm">Ver Resultados</a>
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-{% if not abertos and not ativos and not finalizados %}
-<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F3C6;</div><p>Nenhuma competição disponível no momento.</p>{% if current_user.is_admin %}<a href="{{ url_for('main.admin_novo_torneio') }}" class="btn btn-primary" style="margin-top:14px">+ Criar Torneio</a>{% endif %}</div></div>
-{% endif %}
-
-{% if current_user.is_admin %}
-<div style="margin-top:24px"><a href="{{ url_for('main.admin_novo_torneio') }}" class="btn btn-primary">+ Criar Torneio</a></div>
-{% endif %}
-
-<script>
-function inscreverTorneio(id, btn) {
-  fetch('/competicoes/'+id+'/entrar', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('meta[name="csrf-token"]').content},
-    body:'{}'
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok){ btn.textContent='✓ Inscrito!'; btn.disabled=true; btn.className='btn btn-secondary btn-full btn-sm'; setTimeout(()=>location.reload(),800); }
-    else showToast('\u{274C} '+d.erro,'danger');
-  });
-}
-</script>
+<section class="espaco-t"><h2>Abertas e agendadas</h2>
+  {% if ativos %}<ul class="pauta">{% for t in ativos %}{{ item(t) }}{% endfor %}</ul>
+  {% else %}{{ vazio('swords', 'Nenhuma competição aberta', 'Quando uma nova competição for criada, ela aparece aqui.') }}{% endif %}</section>
+{% if passados %}<section class="espaco-t"><h2>Encerradas</h2><ul class="pauta">{% for t in passados %}{{ item(t) }}{% endfor %}</ul></section>{% endif %}
 {% endblock %}

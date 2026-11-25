@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf, paginacao %}
+{% block titulo %}Notificações — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Notificações</h1></div>
+  {% if pag.items %}<form method="post" action="{{ url_for('notificacoes.marcar_lidas') }}" data-otimista data-otimista-alvo=".nao-lida" data-otimista-classe="nao-lida" data-otimista-ocultar=".sino-num">{{ csrf() }}<button class="btn btn-ghost" type="submit">{{ icone('check-check') }}Marcar todas como lidas</button></form>{% endif %}</div>
+{% if not pag.items %}{{ vazio('bell', 'Nada por aqui', 'Avisos de nível, pagamentos e amizades aparecem nesta lista.') }}
+{% else %}
+<ul class="lista-marcada">
+  {% for n in pag.items %}
+  <li class="{{ 'nao-lida' if not n.lida }}"><a href="{{ url_for('notificacoes.abrir', nid=n.id) }}"><strong>{{ n.titulo }}</strong>{% if n.corpo %} — {{ n.corpo }}{% endif %}</a>
+    <span class="pauta-meta">{{ n.criado_em|datahora }}</span></li>
+  {% endfor %}
+</ul>
+{{ paginacao(pag, 'notificacoes.index') }}
+{% endif %}
+{% endblock %}

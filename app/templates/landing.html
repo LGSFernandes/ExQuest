@@ -1,0 +1,30 @@
+{% extends 'base_public.html' %}
+{% from '_ui.html' import icone %}
+{% block titulo %}ExQuest — questões comentadas, simulados e ranking para estudar todo dia{% endblock %}
+{% block head_extra %}<script type="application/ld+json">{{ {"@context": "https://schema.org", "@type": "WebApplication", "name": "ExQuest", "url": config.BASE_URL, "applicationCategory": "EducationalApplication", "inLanguage": "pt-BR", "description": "Questões comentadas, simulados, missões e ranking para estudar todo dia."}|tojson }}</script>{% endblock %}
+{% block conteudo %}
+<section class="heroi">
+  <div class="heroi-texto">
+    <h1>Questões comentadas, simulados e ranking para estudar todo dia</h1>
+    <p class="leitura">Resolva questões por matéria, receba a explicação de cada resposta e acompanhe sua evolução. XP, sequência diária e moedas transformam constância em recompensa.</p>
+    <div class="acoes"><a class="btn" href="{{ url_for('auth.registro') }}">Criar conta grátis</a><a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Já tenho conta</a></div>
+  </div>
+  <div class="heroi-folha folha" aria-label="Exemplo da tela de resposta">
+    <p class="tenue">Exemplo da folha de respostas</p>
+    <p class="enunciado">Se 2x + 6 = 14, quanto vale x?</p>
+    <div class="gabarito corrigido" role="list">
+      <div class="opcao" role="listitem"><span class="bolha">A</span><span class="opcao-texto">2</span><span></span></div>
+      <div class="opcao certa" role="listitem"><span class="bolha">B</span><span class="opcao-texto">4 <span class="so-leitor">(resposta correta)</span></span><span class="opcao-sinal">{{ icone('circle-check') }}</span></div>
+      <div class="opcao errada" role="listitem"><span class="bolha">C</span><span class="opcao-texto">7 <span class="so-leitor">(resposta incorreta)</span></span><span class="opcao-sinal">{{ icone('circle-x') }}</span></div>
+    </div>
+  </div>
+</section>
+<section class="recursos">
+  <div class="recursos-grade">
+    <div><h2>Estude por matéria</h2><p>Filtre por matéria e dificuldade. Cada questão traz a explicação do gabarito.</p></div>
+    <div><h2>Simulados com tempo</h2><p>Monte um simulado, responda no relógio e veja acertos e tempo ao final.</p></div>
+    <div><h2>Revisão dos erros</h2><p>As questões que você erra voltam para revisão em intervalos crescentes.</p></div>
+    <div><h2>Ranking e competições</h2><p>Compare seu XP com o de outros alunos e dispute competições com as mesmas questões para todos.</p></div>
+  </div>
+</section>
+{% endblock %}

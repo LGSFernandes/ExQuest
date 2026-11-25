@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf %}
+{% block titulo %}Denúncias — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Denúncias</h1><p>Perfis denunciados por outros alunos. Banir encerra a sessão da conta e impede novo acesso.</p></div></div>
+{% if not itens %}{{ vazio('shield-check', 'Nenhuma denúncia', 'Quando um aluno denunciar um perfil, ela aparece aqui.') }}
+{% else %}
+<ul class="pilha">
+  {% for d in itens %}{% set alvo = usuarios.get(d.alvo_id) if d.alvo_tipo == 'usuario' else None %}{% set autor = usuarios.get(d.autor_id) %}{% set msg = mensagens.get(d.alvo_id) if d.alvo_tipo == 'mensagem' else None %}
+  <li class="folha pilha {{ 'resolvida' if d.status != 'aberta' }}">
+    <p><strong>{{ ('@' ~ alvo.username) if alvo else (d.alvo_tipo ~ ' #' ~ d.alvo_id) }}</strong> denunciado por @{{ autor.username if autor else '?' }} em {{ d.criado_em|datahora }}</p>{% if msg %}<blockquote class="citacao">{{ msg.conteudo or '[imagem]' }}<footer class="pauta-meta">de @{{ usuarios[msg.remetente_id].username if msg.remetente_id in usuarios else '?' }}{% if msg.deletado %} · oculta{% endif %}</footer></blockquote>{% endif %}{% if d.detalhe %}<p>{{ d.detalhe }}</p>{% endif %}
+    <p class="pauta-meta">Motivo: {{ d.motivo }} · {{ d.status }}</p>
+    {% if d.status == 'aberta' %}
+    <form method="post" action="{{ url_for('admin.denuncia_resolver', did=d.id) }}" class="linha">{{ csrf() }}
+      {% if alvo %}<a class="btn btn-ghost" href="{{ url_for('perfil.ver', username=alvo.username) }}">{{ icone('eye') }}Ver perfil</a>{% endif %}
+      {% if msg %}<button class="btn btn-ghost" name="acao" value="ocultar" type="submit">{{ icone('eye-off') }}Ocultar mensagem</button>{% endif %}
+      <button class="btn btn-ghost" name="acao" value="arquivar" type="submit">{{ icone('check') }}Arquivar</button>
+      <button class="btn btn-primary" name="acao" value="banir" type="submit">{{ icone('ban') }}Banir {{ 'autor' if msg else 'conta' }}</button>
+    </form>{% endif %}
+  </li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

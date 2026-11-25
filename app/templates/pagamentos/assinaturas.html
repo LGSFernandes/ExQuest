@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import vazio %}
+{% block titulo %}Assinaturas — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Histórico de assinaturas</h1></div><a class="btn btn-ghost" href="{{ url_for('pagamentos.premium_pagina') }}">Premium</a></div>
+{% if not itens %}{{ vazio('crown', 'Nenhuma assinatura ainda', 'Quando você ativar um plano, ele aparece aqui.') }}{% else %}
+<div class="tabela-rolagem"><table class="tabela"><thead><tr><th scope="col">Plano</th><th scope="col">Ciclo</th><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Situação</th></tr></thead><tbody>
+{% for a in itens %}<tr><td>{{ nomes.get(a.plano, {}).get('nome', a.plano) }}</td><td>{{ a.ciclo }}</td><td>{{ a.inicio|datahora }}</td><td>{{ a.expira|datahora }}</td><td>{{ a.status }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% endblock %}

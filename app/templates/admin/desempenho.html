@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio %}
+{% block titulo %}Desempenho — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Desempenho real</h1><p>Percentil 75 das métricas medidas nos navegadores dos alunos. Anônimo: sem usuário, IP ou aparelho identificável.</p></div></div>
+<form class="folha linha" method="get">
+  <label>Período
+    <select name="dias" data-auto-enviar>{% for d, t in ((1, '24 horas'), (7, '7 dias'), (30, '30 dias')) %}<option value="{{ d }}" {{ 'selected' if d == dias }}>{{ t }}</option>{% endfor %}</select></label>
+  <label>Aparelho
+    <select name="d" data-auto-enviar><option value="">Todos</option><option value="movel" {{ 'selected' if disp == 'movel' }}>Celular</option><option value="desktop" {{ 'selected' if disp == 'desktop' }}>Computador</option></select></label>
+  <noscript><button class="btn btn-ghost">Filtrar</button></noscript>
+</form>
+{% if not linhas %}{{ vazio('gauge', 'Ainda sem medições', 'As métricas aparecem aqui conforme os alunos navegam.') }}
+{% else %}
+<div class="tabela-wrap"><table class="tabela">
+  <thead><tr><th>Página</th><th>Métrica</th><th>p75</th><th>Situação</th><th>Amostras</th></tr></thead>
+  <tbody>
+  {% for l in linhas %}
+    <tr><td>{{ l.rota }}</td><td>{{ l.nome }}</td>
+      <td>{{ '%.3f'|format(l.p75) if l.nome == 'CLS' else '%.0f ms'|format(l.p75) }}</td>
+      <td><span class="tag tag-{{ {'bom': 'facil', 'medio': 'medio', 'ruim': 'dificil'}[l.nivel] }}">{{ {'bom': 'Bom', 'medio': 'Precisa melhorar', 'ruim': 'Ruim'}[l.nivel] }}</span></td>
+      <td>{{ l.amostras }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="ajuda">Limites (bom / ruim): {% for n, (b, r) in limites.items() %}{{ n }} {{ b }} / {{ r }}{{ ', ' if not loop.last }}{% endfor %}. Fonte: web.dev.</p>
+{% endif %}
+{% endblock %}

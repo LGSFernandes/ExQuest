@@ -1,0 +1,51 @@
+{% extends 'base_public.html' %}
+{% block titulo %}Termos de uso — ExQuest{% endblock %}
+{% block descricao %}Regras de uso do ExQuest: conta, conteúdo, pagamentos, Premium, moedas e responsabilidades.{% endblock %}
+{% block conteudo %}
+<div class="pagina pagina-estreita pilha pilha-l">
+  <h1>Termos de uso</h1>
+  <p class="muted">Última atualização: 14 de novembro de 2026.</p>
+
+  <section class="pilha"><h2>1. O que é o ExQuest</h2>
+    <p>O ExQuest é uma plataforma de estudos com questões comentadas, simulados, revisão, missões, competições, ranking, loja de itens cosméticos, amigos e mensagens. Ao criar uma conta ou usar o serviço, você concorda com estes termos e com a <a href="{{ url_for('main.privacidade') }}">Política de Privacidade</a>.</p></section>
+
+  <section class="pilha"><h2>2. Sua conta</h2>
+    <ul>
+      <li>Informe dados verdadeiros e mantenha sua senha em segredo. Você responde pelo que é feito com a sua conta.</li>
+      <li>Se você tem menos de 18 anos, use o ExQuest com o conhecimento e o acompanhamento de um responsável.</li>
+      <li>Cada pessoa deve ter uma conta. Não é permitido vender, transferir ou compartilhar contas.</li>
+      <li>Você pode excluir a conta a qualquer momento em Configurações, na opção "Excluir conta".</li>
+    </ul></section>
+
+  <section class="pilha"><h2>3. Regras de convivência</h2>
+    <p>Não é permitido: assediar, ameaçar ou ofender outras pessoas; publicar conteúdo ilegal, sexual envolvendo menores, discriminatório ou que invada a privacidade de terceiros; enviar spam; fraudar o sistema de XP, moedas, missões, rankings ou competições (por exemplo com contas múltiplas, automação ou explorando falhas); tentar acessar dados de outras pessoas ou comprometer a segurança do serviço.</p>
+    <p>Qualquer pessoa pode denunciar perfis e mensagens. Conteúdos que violem estas regras podem ser ocultados, e contas podem ser suspensas ou banidas, com ou sem aviso prévio conforme a gravidade.</p></section>
+
+  <section class="pilha"><h2>4. Conteúdo que você envia</h2>
+    <p>Fotos, banners, bios, nomes e mensagens continuam sendo seus. Você nos autoriza a armazená-los e exibi-los dentro do ExQuest conforme as configurações de privacidade que você escolher, apenas para operar o serviço. Você declara ter o direito de enviar esse conteúdo.</p>
+    <p>As questões, explicações e demais materiais de estudo do ExQuest são protegidos. Você pode usá-los para estudar, mas não pode copiá-los em massa, revendê-los ou republicá-los.</p></section>
+
+  <section class="pilha"><h2>5. XP, moedas e itens</h2>
+    <p>XP, moedas, sequência, conquistas e itens da loja são recursos internos do ExQuest. Não têm valor em dinheiro, não podem ser trocados por dinheiro nem transferidos entre contas. Podemos ajustar preços, recompensas e regras de pontuação para manter o equilíbrio do serviço, sem retirar itens já comprados e em uso.</p></section>
+
+  <section class="pilha"><h2>6. Premium e compras</h2>
+    <ul>
+      <li>O Premium e os pacotes de moedas são pagamentos únicos. <strong>Não há renovação automática</strong>: cada pagamento libera o período informado (30 dias no plano mensal, 365 dias no anual) e você decide se paga de novo.</li>
+      <li>Os pagamentos são processados pelo Mercado Pago ou pelo Stripe. O ExQuest não recebe nem guarda os dados do seu cartão.</li>
+      <li>Os benefícios são liberados quando o provedor confirma o pagamento. Se houver demora, o acesso é liberado assim que a confirmação chegar.</li>
+      <li>Você pode pedir o cancelamento e o reembolso em até 7 dias após a compra, conforme o direito de arrependimento do Código de Defesa do Consumidor, escrevendo para o contato abaixo. Fora desse prazo, pagamentos já usados não são reembolsáveis, salvo falha nossa ou obrigação legal.</li>
+      <li>Em caso de reembolso ou contestação do pagamento, os benefícios correspondentes (Premium, moedas) podem ser retirados.</li>
+    </ul></section>
+
+  <section class="pilha"><h2>7. Disponibilidade e responsabilidade</h2>
+    <p>Trabalhamos para manter o serviço no ar e o conteúdo correto, mas ele é oferecido "como está". Podem ocorrer erros em questões, gabaritos ou explicações; se encontrar algum, avise. O ExQuest é uma ferramenta de apoio e não garante aprovação em provas ou concursos. Dentro do que a lei permite, não respondemos por danos indiretos decorrentes do uso do serviço.</p></section>
+
+  <section class="pilha"><h2>8. Mudanças nestes termos</h2>
+    <p>Podemos atualizar estes termos. Mudanças relevantes serão avisadas no serviço. Continuar usando o ExQuest depois do aviso significa que você aceita a nova versão.</p></section>
+
+  <section class="pilha"><h2>9. Lei aplicável e contato</h2>
+    <p>Estes termos seguem as leis do Brasil. Fica garantido ao consumidor o foro do seu domicílio.</p>
+    {% if config.CONTATO_EMAIL %}<p>Dúvidas, denúncias, pedidos de reembolso e direitos sobre seus dados: <a href="mailto:{{ config.CONTATO_EMAIL }}">{{ config.CONTATO_EMAIL }}</a>.</p>
+    {% else %}<p>Dúvidas, denúncias e pedidos de reembolso: use a opção de denúncia dentro do serviço ou o contato informado pelo responsável pelo ExQuest.</p>{% endif %}</section>
+</div>
+{% endblock %}

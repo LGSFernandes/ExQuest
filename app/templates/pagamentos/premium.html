@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf %}
+{% block titulo %}Premium — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Premium</h1>
+  <p>Mais questões, simulados maiores e recursos de perfil. Cada pagamento libera 30 dias (mensal) ou 365 dias (anual) e <strong>não renova sozinho</strong>: você decide quando pagar de novo.</p></div></div>
+{% if current_user.is_admin and not current_user.plano_premium %}<div class="folha pilha"><h2>Seu plano</h2>
+  <p>Contas de administrador têm todos os recursos do plano {{ planos[current_user.plano_efetivo].nome }}, sem prazo de validade.</p></div>
+{% elif current_user.premium_ativo %}<div class="folha pilha"><h2>Seu plano</h2>
+  <p>{{ planos[current_user.plano_premium].nome }} ativo até <strong>{{ current_user.premium_expira|datahora }}</strong>. Renovar o mesmo plano soma dias ao final atual. Fazer upgrade vale na hora, mas o tempo restante do plano atual não é convertido.</p>
+  <p><a href="{{ url_for('pagamentos.assinaturas') }}">Ver histórico de assinaturas</a></p></div>{% endif %}
+<form method="post" action="{{ url_for('pagamentos.checkout') }}" class="pilha pilha-l espaco-t">
+  {{ csrf() }}<input type="hidden" name="tipo" value="premium">
+  {% include 'pagamentos/_provedor.html' %}
+  <div class="grade" data-vars="--min:16rem">
+  {% for k, p in planos.items() %}{% set atual = current_user.plano_premium if (current_user.plano_premium and current_user.premium_ativo) else None %}
+    <article class="folha pilha item-loja"><h2>{{ p.nome }}</h2>
+      <ul class="lista-marcada">{% for b in beneficios(k) %}<li>{{ icone('check') }}<span>{{ b }}</span></li>{% endfor %}</ul>
+      <div class="pilha pilha-s item-rodape">
+        {% for c, dias in ciclos.items() %}
+        <button class="btn btn-sm btn-alvo {{ '' if c == 'mensal' else 'btn-ghost' }}" type="submit" name="produto" value="{{ k }}:{{ c }}"
+          {% if not provs or (atual and ordem[k] < ordem[atual]) %}disabled{% endif %}>
+          {{ 'Renovar' if atual == k else ('Fazer upgrade' if atual else 'Assinar') }} {{ c }} · {{ brl(p[c]) }}</button>{% endfor %}
+      </div></article>
+  {% endfor %}
+  </div>
+</form>
+{% if historico %}<section class="espaco-t"><h2>Seus pagamentos</h2>
+  <div class="tabela-rolagem"><table class="tabela"><thead><tr><th scope="col">Data</th><th scope="col">Item</th><th scope="col">Valor</th><th scope="col">Status</th></tr></thead><tbody>
+  {% for h in historico %}<tr><td>{{ h.criado_em|datahora }}</td><td>{{ h.descricao }}</td><td>{{ brl(h.valor_centavos) }}</td><td>{{ h.status }}</td></tr>{% endfor %}</tbody></table></div></section>{% endif %}
+{% endblock %}

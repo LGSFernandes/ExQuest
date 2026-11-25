@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone %}
+{% block titulo %}Pagamento — ExQuest{% endblock %}
+{% block head_extra %}{% if pg.status in ('criado', 'pendente') %}<meta http-equiv="refresh" content="8">{% endif %}{% endblock %}
+{% block conteudo %}
+<div class="folha pilha pilha-l" role="status">
+  {% if pg.status == 'aprovado' %}<h1>Pagamento confirmado</h1><p>{% if pg.tipo == 'moedas' %}{{ pg.moedas_total }} moedas foram adicionadas à sua carteira.{% else %}Seu plano {{ pg.plano }} está ativo.{% endif %}</p>
+  {% elif pg.status in ('criado', 'pendente') %}<h1>Aguardando confirmação</h1><p>O provedor ainda não confirmou o pagamento. Pix e boleto podem levar alguns minutos. Esta página se atualiza sozinha e você pode sair: o item é liberado assim que o pagamento for confirmado.</p>
+  {% elif pg.status in ('reembolsado', 'contestado') %}<h1>Pagamento estornado</h1><p>Este pagamento foi {{ 'reembolsado' if pg.status == 'reembolsado' else 'contestado' }} e o item foi retirado.</p>
+  {% elif pg.status == 'divergente' %}<h1>Pagamento em conferência</h1><p>O valor recebido pelo provedor é diferente do valor do pedido, então nada foi liberado automaticamente. Guarde o comprovante e fale com o suporte para resolvermos.</p>
+  {% else %}<h1>Pagamento não concluído</h1><p>O pagamento foi {{ pg.status }}. Nada foi cobrado pelo ExQuest. Você pode tentar de novo.</p>{% endif %}
+  <p class="linha"><a class="btn" href="{{ url_for('main.inicio') }}">Ir ao início</a>
+    <a class="btn btn-ghost" href="{{ url_for('pagamentos.moedas' if pg.tipo == 'moedas' else 'pagamentos.premium_pagina') }}">Voltar</a></p>
+</div>
+{% endblock %}

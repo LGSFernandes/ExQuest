@@ -1,0 +1,8 @@
+{% from '_ui.html' import icone %}
+{% macro previa(item) -%}
+  {%- if item.tipo == 'borda' -%}<span class="avatar-moldura {{ item.css_class }}"><span class="avatar avatar-g">{{ icone('user') }}</span></span>
+  {%- elif item.tipo == 'badge' -%}<span class="selo {{ item.css_class }}">{{ icone('award') }}</span>
+  {%- elif item.tipo in ('fundo', 'efeito') -%}<span class="previa-fundo"><span class="perfil-fundo {{ item.css_class if item.tipo == 'fundo' else '' }}"></span><span class="perfil-efeito {{ item.css_class if item.tipo == 'efeito' else '' }}"></span></span>
+  {%- elif item.tipo == 'streak_shield' -%}<span class="selo selo-neutro">{{ icone('shield') }}</span>
+  {%- else -%}<span class="selo selo-neutro">{{ icone('zap') }}</span>{%- endif -%}
+{%- endmacro %}

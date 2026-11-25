@@ -1,0 +1,11 @@
+{% extends 'base_public.html' %}
+{% from '_ui.html' import icone %}
+{% block titulo %}{{ titulo }} — ExQuest{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block conteudo %}
+<div class="pagina pagina-estreita"><div class="vazio">
+  {{ icone('circle-alert', 'icone-xl') }}<h1>{{ titulo }}</h1><p>{{ mensagem }}</p>
+  <div class="acoes"><a class="btn" href="{{ url_for('main.inicio') }}">Voltar ao início</a><button class="btn btn-ghost" type="button" data-voltar>Página anterior</button></div>
+  <small class="tenue">Código {{ codigo }}</small>
+</div></div>
+{% endblock %}

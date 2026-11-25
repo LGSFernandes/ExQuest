@@ -1,0 +1,19 @@
+{% extends '_layout.html' %}
+{% from '_ui.html' import icone, logo, avisos %}
+{% block corpo %}
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<header class="topo topo-publico">
+  <a class="topo-marca" href="{{ url_for('main.inicio') }}" aria-label="ExQuest, início">{{ logo() }}<span>ExQuest</span></a>
+  <span class="topo-espaco"></span>
+  {% if current_user.is_authenticated %}<a class="btn btn-sm" href="{{ url_for('main.inicio') }}">Ir para o painel</a>
+  {% else %}<a class="btn btn-quiet btn-sm btn-alvo" href="{{ url_for('auth.login') }}">Entrar</a><a class="btn btn-sm btn-alvo" href="{{ url_for('auth.registro') }}">Criar conta</a>{% endif %}
+</header>
+<main id="conteudo" tabindex="-1">{% block conteudo %}{% endblock %}</main>
+<footer class="rodape-site"><div class="conteudo">
+  <span>ExQuest. Estude, pratique e evolua.</span>
+  <nav class="linha" aria-label="Rodapé">{% if tem_rota('main.termos') %}<a href="{{ url_for('main.termos') }}">Termos de uso</a>{% endif %}{% if tem_rota('main.privacidade') %}<a href="{{ url_for('main.privacidade') }}">Privacidade</a>{% endif %}</nav>
+</div></footer>
+{{ avisos() }}
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+{% endblock %}

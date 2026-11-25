@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block titulo %}ExQuest{% endblock %}</title>
+{% set _desc = self.descricao() if self.descricao is defined else '' %}
+<meta name="description" content="{% block descricao %}Estude com questões comentadas, simulados e ranking. Ganhe XP, mantenha sua sequência diária e evolua nos estudos.{% endblock %}">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#1b3cb0">
+{% block robots %}{% endblock %}
+<link rel="canonical" href="{{ config.BASE_URL }}{{ request.path }}">
+<meta property="og:site_name" content="ExQuest"><meta property="og:type" content="website"><meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="{{ self.titulo() }}"><meta property="og:url" content="{{ config.BASE_URL }}{{ request.path }}">
+<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/ico">
+<link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/png">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='img/site.webmanifest') }}">
+<meta property="og:description" content="{{ self.descricao() }}"><meta property="og:image" content="{{ config.BASE_URL }}{{ url_for('static', filename='img/android-chrome-512x512.png') }}">
+<meta name="twitter:card" content="summary">
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cosmeticos.css') }}">
+{# o preload precisa ter a MESMA URL que o @font-face usa (sem ?v=), senão o navegador baixa a fonte duas vezes #}
+<link rel="preload" href="{{ url_for('static', filename='fonts/literata-latin-wght-normal.woff2').split('?')[0] }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ url_for('static', filename='fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2').split('?')[0] }}" as="font" type="font/woff2" crossorigin>
+{% if config.CDN_URL %}<link rel="preconnect" href="{{ config.CDN_URL }}" crossorigin>{% endif %}
+<script src="{{ url_for('static', filename='js/katex-init.js') }}" defer
+  data-css="{{ url_for('static', filename='vendor/katex/katex.min.css') }}" data-js="{{ url_for('static', filename='vendor/katex/katex.min.js') }}"
+  data-auto="{{ url_for('static', filename='vendor/katex/contrib/auto-render.min.js') }}"></script>
+{% if config.RUM_ENABLED and request.endpoint %}<script src="{{ url_for('static', filename='js/rum.js') }}" defer data-rota="{{ request.endpoint }}" data-amostra="{{ config.RUM_SAMPLE }}"></script>{% endif %}
+{% block head_extra %}{% endblock %}
+</head>
+<body>{% block corpo %}{% endblock %}</body>
+</html>

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf, vazio %}
+{% block titulo %}Competições — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Competições</h1><p>As questões são sorteadas ao criar e ficam fixas para todos. Horários em Brasília.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('admin.painel') }}">Voltar</a></div>
+<form method="post" action="{{ url_for('admin.competicao_nova') }}" class="folha pilha">
+  {{ csrf() }}
+  <div class="campo"><label for="c-nome">Nome</label><input id="c-nome" class="entrada" name="nome" maxlength="100" required></div>
+  <div class="campo"><label for="c-desc">Descrição</label><textarea id="c-desc" class="area" name="descricao" rows="2" maxlength="1000"></textarea></div>
+  <div class="campo"><label for="c-tipo">Tamanho</label><select id="c-tipo" class="selecao" name="tipo">
+    {% for k, v in tipos.items() %}<option value="{{ k }}">{{ v.label }} — {{ v.questoes }} questões, {{ v.tempo_min }} min</option>{% endfor %}</select></div>
+  <div class="campo"><label for="c-ini">Início</label><input id="c-ini" class="entrada" type="datetime-local" name="inicio" required></div>
+  <div class="campo"><label for="c-fim">Fim</label><input id="c-fim" class="entrada" type="datetime-local" name="fim" required></div>
+  <fieldset class="gabarito"><legend class="rotulo">Matérias (nenhuma marcada = todas)</legend>
+    {% for m in materias %}<label class="marcar"><input type="checkbox" name="materias" value="{{ m.id }}"><span>{{ m.nome }}</span></label>{% endfor %}</fieldset>
+  <fieldset class="gabarito"><legend class="rotulo">Dificuldade (nenhuma marcada = todas)</legend>
+    <label class="marcar"><input type="checkbox" name="dificuldades" value="facil"><span>Fácil</span></label>
+    <label class="marcar"><input type="checkbox" name="dificuldades" value="medio"><span>Média</span></label>
+    <label class="marcar"><input type="checkbox" name="dificuldades" value="dificil"><span>Difícil</span></label></fieldset>
+  <div><button class="btn btn-primary" type="submit">{{ icone('plus') }}Criar competição</button></div>
+</form>
+<section class="espaco-t"><h2>Cadastradas</h2>
+{% if not itens %}{{ vazio('swords', 'Nenhuma competição', 'Crie a primeira acima.') }}{% else %}
+<ul class="pauta">{% for t in itens %}<li><div class="pauta-item-link">
+  <div class="pauta-corpo"><div class="pauta-titulo"><a href="{{ url_for('competicoes.ver', tid=t.id) }}">{{ t.nome }}</a></div>
+  <div class="pauta-meta">{{ t.fase }} · {{ t.inicio|datahora }} a {{ t.fim|datahora }}</div></div>
+  {% if t.status == 'aberto' %}<form method="post" action="{{ url_for('admin.competicao_cancelar', tid=t.id) }}">{{ csrf() }}
+    <button class="btn btn-ghost" type="submit" data-confirmar="Cancelar esta competição? Os inscritos serão avisados e ninguém recebe prêmio.">Cancelar</button></form>{% endif %}
+</div></li>{% endfor %}</ul>{% endif %}</section>
+{% endblock %}

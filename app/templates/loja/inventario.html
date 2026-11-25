@@ -1,20 +1,30 @@
-{% extends "base.html" %}
-{% block title %}Inventário{% endblock %}
-{% block content %}
-<div class="page-header animate-in"><h1>&#x1F392; Inventário</h1><p>Equipe itens para exibir no seu perfil!</p></div>
-{% if itens %}
-<div class="inv-grid">
-  {% for inv in itens %}
-  <div class="inv-card animate-in">
-    <div style="font-size:34px;margin-bottom:8px">{% if inv.item.tipo=='borda' %}&#x1F535;{% elif inv.item.tipo=='efeito' %}&#x2728;{% elif inv.item.tipo=='badge' %}&#x1F3C5;{% elif inv.item.tipo=='boost_xp' %}&#x26A1;{% elif inv.item.tipo=='boost_moeda' %}&#x1FA99;{% else %}&#x1F6E1;&#xFE0F;{% endif %}</div>
-    <div style="font-weight:700;font-size:13px;margin-bottom:4px">{{ inv.item.nome }}</div>
-    <span class="badge-raridade {{ inv.item.raridade }}" style="margin-bottom:10px;display:inline-block">{{ inv.item.raridade|capitalize }}</span>
-    {% if inv.quantidade > 1 %}<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">x{{ inv.quantidade }}</div>{% endif %}
-    <button class="btn btn-primary btn-sm btn-full" onclick="usarItem({{ inv.item_id }})">{% if inv.equipado %}✓ Equipado{% else %}Equipar{% endif %}</button>
-  </div>
-  {% endfor %}
-</div>
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf %}
+{% from 'loja/_previa.html' import previa %}
+{% block titulo %}Inventário — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Inventário</h1><p>Equipe cosméticos e use boosts e escudos.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('loja.index') }}">{{ icone('store') }}Ir à loja</a></div>
+{% if not itens %}{{ vazio('backpack', 'Inventário vazio', 'Itens que você comprar ou ganhar por nível aparecem aqui.', 'Ver a loja', url_for('loja.index')) }}
 {% else %}
-<div class="card animate-in"><div class="empty-state"><div class="empty-state-icon">&#x1F392;</div><p>Inventário vazio. <a href="{{ url_for('main.loja') }}">Visite a loja!</a></p></div></div>
-{% endif %}
+<div class="grade" data-vars="--min:15rem">
+{% for inv in itens %}{% set i = inv.item %}
+  <article class="folha pilha item-loja raridade-{{ i.raridade }}">
+    <div class="item-previa">{{ previa(i) }}</div>
+    <div class="pilha pilha-s"><h2 class="item-nome">{{ i.nome }}</h2>
+      <p class="linha"><span class="tag">{{ nome_tipo.get(i.tipo, i.tipo) }}</span><span class="tag tag-r-{{ i.raridade }}">{{ nome_raridade.get(i.raridade, i.raridade) }}</span>
+        {% if i.eh_consumivel %}<span class="tag">{{ inv.quantidade }} {{ 'carga' if inv.quantidade == 1 else 'cargas' }}</span>{% endif %}
+        {% if inv.expira_em %}<span class="tag {{ 'tag-dificil' if inv.expirado else '' }}">{{ 'Expirou em' if inv.expirado else 'Vale até' }} {{ inv.expira_em|datahora }}</span>{% endif %}</p></div>
+    <div class="item-rodape">
+    {% if i.eh_consumivel %}
+      <form method="post" action="{{ url_for('loja.usar', item_id=i.id) }}">{{ csrf() }}<button class="btn btn-sm btn-alvo" type="submit">Usar agora</button></form>
+    {% elif inv.expirado %}<span class="pauta-meta">Compre de novo na loja para renovar.</span>
+    {% elif inv.equipado %}
+      <form method="post" action="{{ url_for('loja.desequipar', tipo=i.tipo) }}">{{ csrf() }}<button class="btn btn-ghost btn-sm btn-alvo" type="submit">{{ icone('check') }}Equipado · tirar</button></form>
+    {% else %}
+      <form method="post" action="{{ url_for('loja.equipar', item_id=i.id) }}">{{ csrf() }}<button class="btn btn-sm btn-alvo" type="submit">Equipar</button></form>
+    {% endif %}
+    </div>
+  </article>{% endfor %}
+</div>{% endif %}
 {% endblock %}

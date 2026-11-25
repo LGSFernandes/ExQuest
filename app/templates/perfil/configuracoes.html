@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf, campo, avatar %}
+{% block titulo %}Configurações — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Configurações</h1><p>Seus dados, sua privacidade e sua senha.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('perfil.meu') }}">{{ icone('user') }}Ver meu perfil</a></div>
+<div class="pilha pilha-l">
+<form method="post" enctype="multipart/form-data" class="folha pilha" novalidate>
+  {{ csrf() }}<input type="hidden" name="acao" value="perfil">
+  <h2>Perfil</h2>
+  <div class="grade" data-vars="--min:15rem">{{ campo(form.nome) }}{{ campo(form.sobrenome) }}</div>
+  <div class="campo"><label for="{{ form.biografia.id }}">Biografia</label>{{ form.biografia(class='area', rows=3, maxlength=300) }}{% for e in form.biografia.errors %}<p class="erro-campo">{{ e }}</p>{% endfor %}</div>
+  <div class="grade" data-vars="--min:18rem">
+    <div class="campo"><label for="{{ form.icon_file.id }}">Foto de perfil</label>{{ form.icon_file(class='entrada', accept='image/png,image/jpeg,image/webp,image/gif') }}
+      <p class="pauta-meta">PNG, JPG ou WebP até 2 MB. GIF a partir do plano Básico.</p>
+      {% if current_user.icon_path %}<label class="marcar">{{ form.remover_icon() }}<span>{{ form.remover_icon.label.text }}</span></label>{% endif %}</div>
+    <div class="campo"><label for="{{ form.banner_file.id }}">Banner</label>{{ form.banner_file(class='entrada', accept='image/png,image/jpeg,image/webp,image/gif', disabled=not current_user.pode_upload_banner) }}
+      <p class="pauta-meta">{% if current_user.pode_upload_banner %}Até 5 MB.{% else %}Disponível a partir do plano Intermediário.{% endif %}</p>
+      {% if current_user.banner_path %}<label class="marcar">{{ form.remover_banner() }}<span>{{ form.remover_banner.label.text }}</span></label>{% endif %}</div>
+  </div>
+  <fieldset class="campo"><legend class="rotulo">Privacidade</legend><div class="pilha pilha-s">
+    {% for f in (form.mostrar_stats, form.mostrar_historico, form.mostrar_amigos, form.bloquear_pedidos_amizade) %}<label class="marcar">{{ f() }}<span>{{ f.label.text }}</span></label>{% endfor %}</div></fieldset>
+  <fieldset class="campo"><legend class="rotulo">Nome em destaque</legend>
+    <div class="grade" data-vars="--min:12rem">
+      <div class="campo"><label for="{{ form.nick_cor.id }}">Cor</label>{{ form.nick_cor(class='entrada', placeholder='#1b3cb0', disabled=not current_user.pode_nick_cor) }}</div>
+      <div class="campo"><label for="{{ form.nick_cor2.id }}">Segunda cor</label>{{ form.nick_cor2(class='entrada', placeholder='#c8281e', disabled=not current_user.pode_nick_gradiente) }}</div>
+      <div class="campo"><label for="{{ form.nick_fonte.id }}">Fonte</label>{{ form.nick_fonte(class='selecao', disabled=not current_user.pode('nick_fonte')) }}</div>
+      <div class="campo"><label for="{{ form.tag_custom.id }}">Tag personalizada</label>{{ form.tag_custom(class='entrada', maxlength=10, disabled=not current_user.pode_tag_custom) }}</div></div>
+    <p class="pauta-meta">Cor: plano Intermediário. Gradiente, fonte e tag: plano Avançado. Prévia: <strong>{{ current_user.nome }}</strong></p>
+    {% for f in (form.nick_cor, form.nick_cor2, form.tag_custom) %}{% for e in f.errors %}<p class="erro-campo">{{ e }}</p>{% endfor %}{% endfor %}</fieldset>
+  <div><button class="btn" type="submit">Salvar alterações</button></div>
+</form>
+
+<form method="post" action="{{ url_for('perfil.alterar_senha') }}" class="folha pilha" novalidate>
+  {{ csrf() }}<h2>Senha</h2>
+  {% if not current_user.senha_hash %}<p class="pauta-meta">Sua conta entra com Google. Para criar uma senha, use "Esqueci minha senha" na tela de entrada.</p>
+  {% else %}
+  {{ campo(senha.senha_atual, 'password', autocomplete='current-password') }}
+  {{ campo(senha.nova_senha, 'password', autocomplete='new-password') }}
+  {{ campo(senha.confirmar, 'password', autocomplete='new-password') }}
+  <div><button class="btn" type="submit">Alterar senha</button></div>{% endif %}
+</form>
+<section class="folha pilha" aria-labelledby="dados-t">
+  <h2 id="dados-t">Seus dados</h2>
+  <p>Baixe uma cópia do que você enviou e gerou no ExQuest (perfil, respostas, carteira, pagamentos, coleções e mensagens enviadas) em um arquivo JSON.</p>
+  <div><a class="btn btn-ghost" href="{{ url_for('perfil.exportar_dados') }}">{{ icone('download') }}Baixar meus dados</a></div>
+</section>
+<form method="post" action="{{ url_for('perfil.excluir_conta') }}" class="folha pilha" aria-labelledby="excluir-t">
+  {{ csrf() }}<h2 id="excluir-t">Excluir conta</h2>
+  <p>Remove seu nome, e-mail, foto, bio, amigos, coleções e mensagens. Seu XP, moedas e Premium são perdidos. Registros de pagamento são mantidos sem identificação pessoal, por obrigação legal. Isso não pode ser desfeito.</p>
+  {% if current_user.senha_hash %}<div class="campo"><label for="ex-senha">Sua senha</label><input id="ex-senha" class="entrada" type="password" name="senha" autocomplete="current-password" required></div>{% endif %}
+  <div class="campo"><label for="ex-conf">Digite EXCLUIR para confirmar</label><input id="ex-conf" class="entrada" name="confirmacao" autocomplete="off" required></div>
+  <div><button class="btn btn-danger" type="submit" data-confirmar="Excluir sua conta definitivamente? Não há como desfazer.">Excluir minha conta</button></div>
+</form>
+</div>
+{% endblock %}

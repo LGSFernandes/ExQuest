@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, avatar, nick, vazio, csrf %}
+{% block titulo %}{{ u.nome }} (@{{ u.username }}) — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="perfil-stage">
+  <div class="perfil-fundo {{ u.fundo_ativo|classe_css }}" aria-hidden="true"></div>
+  <div class="perfil-efeito {{ u.efeito_ativo|classe_css }}" aria-hidden="true"></div>
+  <div class="perfil-conteudo">
+    <header class="folha perfil-cabeca">
+      {% if u.banner_path %}<img class="perfil-banner" src="{{ url_for('static', filename='data/banner/' ~ u.banner_path) }}" alt="" width="1200" height="300" decoding="async">{% else %}<div class="perfil-banner perfil-banner-vazio" aria-hidden="true"></div>{% endif %}
+      <div class="perfil-id">
+        {{ avatar(u, 'avatar-xg') }}
+        <div class="pilha pilha-s perfil-nome">
+          <h1>{{ nick(u) }} {{ u.sobrenome }}</h1>
+          <p class="linha"><span class="pauta-meta">@{{ u.username }}#{{ u.tag_custom or u.tag }}</span>
+            {% if u.badge_ativa|classe_css %}<span class="selo {{ u.badge_ativa|classe_css }}" title="Badge equipada">{{ icone('award') }}</span>{% endif %}
+            {% if u.premium_ativo and u.plano_premium %}<img class="selo-premium" src="{{ url_for('static', filename='assets/badges/premium_' ~ u.plano_premium ~ '.webp') }}" alt="Plano Premium" width="28" height="28" decoding="async">{% endif %}</p>
+        </div>
+        <div class="perfil-acoes">{% if meu_perfil %}<a class="btn btn-ghost" href="{{ url_for('perfil.configuracoes') }}">{{ icone('pencil') }}Editar perfil</a>{% endif %}
+          {% if not meu_perfil %}<details class="menu-denuncia"><summary class="btn btn-ghost">{{ icone('flag') }}Denunciar</summary>
+            <form method="post" action="{{ url_for('perfil.denunciar', username=u.username) }}" class="folha pilha">{{ csrf() }}
+              <div class="campo"><label for="motivo-den">Motivo</label><select id="motivo-den" class="selecao" name="motivo" required>{% for k, v in motivos_denuncia.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+              <button class="btn btn-primary" type="submit">Enviar denúncia</button></form></details>{% endif %}</div>
+      </div>
+      {% if u.biografia %}<p class="perfil-bio">{{ u.biografia }}</p>{% endif %}
+      <div class="perfil-numeros">
+        <div class="estatistica"><strong>{{ u.nivel }}</strong><span>nível</span></div>
+        <div class="estatistica"><strong>{{ u.xp or 0 }}</strong><span>XP</span></div>
+        <div class="estatistica"><strong>{{ sequencia }}</strong><span>{{ 'dia' if sequencia == 1 else 'dias' }} de sequência</span></div>
+        {% if stats %}<div class="estatistica"><strong>{{ stats.pct }}%</strong><span>de acerto em {{ stats.total }}</span></div>{% endif %}
+      </div>
+    </header>
+
+    {% if stats %}
+    <section class="folha pilha" aria-labelledby="h-mat"><h2 id="h-mat">Desempenho por matéria</h2>
+      {% if not stats.materias %}<p class="pauta-meta">Ainda sem respostas.</p>{% else %}
+      <ul class="pauta">{% for m, total, ac in stats.materias %}{% set pct = (ac * 100 / total)|round|int %}
+        <li><span class="tag">{{ icone(m.icone_chave or 'book') }}</span><div class="pauta-corpo"><div class="pauta-titulo">{{ m.nome }}</div>
+          <progress class="regua regua-fina regua-ok" max="100" value="{{ pct }}" aria-label="Acerto em {{ m.nome }}"></progress></div><span class="pauta-meta">{{ pct }}% · {{ total }}</span></li>{% endfor %}</ul>{% endif %}
+    </section>
+    <section class="folha pilha" aria-labelledby="h-7"><h2 id="h-7">Últimos 7 dias</h2>
+      <ul class="dias">{% for d, tot, ac in stats.dias %}<li><progress class="regua-v" max="{{ stats.dias|map(attribute=1)|max or 1 }}" value="{{ tot }}" aria-label="{{ d.strftime('%d/%m') }}: {{ tot }} respostas, {{ ac }} corretas"></progress><span>{{ d.strftime('%d/%m') }}</span></li>{% endfor %}</ul>
+    </section>{% endif %}
+
+    {% if historico is not none %}
+    <section class="folha pilha" aria-labelledby="h-h"><h2 id="h-h">Últimas respostas</h2>
+      {% if not historico %}<p class="pauta-meta">Ainda sem respostas.</p>{% else %}
+      <ul class="pauta">{% for r, q in historico %}<li><span class="tag {{ 'tag-facil' if r.acertou else 'tag-dificil' }}">{{ icone('check' if r.acertou else 'x') }}{{ 'Certa' if r.acertou else 'Errada' }}</span>
+        <div class="pauta-corpo truncar">{{ q.enunciado|resumo(90) }}</div><span class="pauta-meta">{{ r.data_resposta|datahora }}</span></li>{% endfor %}</ul>{% endif %}
+    </section>{% endif %}
+    {% if lista_amigos is not none %}
+    <section class="folha pilha" aria-labelledby="h-am"><h2 id="h-am">Amigos <span class="pauta-meta">{{ lista_amigos|length }}</span></h2>
+      {% if not lista_amigos %}<p class="pauta-meta">Nenhum amigo ainda.</p>{% else %}
+      <ul class="pauta">{% for f in lista_amigos[:12] %}<li><div class="pauta-corpo truncar"><a href="{{ url_for('perfil.ver', username=f.username) }}">{{ f.nome }} {{ f.sobrenome }}</a> <span class="pauta-meta">@{{ f.username }}</span></div></li>{% endfor %}</ul>
+      {% if lista_amigos|length > 12 %}<p class="pauta-meta">e mais {{ lista_amigos|length - 12 }}.</p>{% endif %}{% endif %}
+    </section>{% endif %}
+  </div>
+</div>
+{% endblock %}

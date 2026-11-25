@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf, campo %}
+{% block titulo %}{{ 'Editar questão' if questao else 'Nova questão' }} — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>{{ 'Editar questão #' ~ questao.id if questao else 'Nova questão' }}</h1>
+  <p>Use <code>$x^2$</code> para fórmula na linha e <code>$$\frac{a}{b}$$</code> para fórmula em destaque. O preview ao lado mostra como o aluno verá.</p></div></div>
+<div class="grade" data-vars="--min:22rem">
+<form method="post" enctype="multipart/form-data" class="folha pilha" novalidate data-preview-form>
+  {{ csrf() }}
+  <div class="grade" data-vars="--min:11rem">
+    {{ campo(form.materia_id, classe='selecao') }}{{ campo(form.dificuldade, classe='selecao') }}{{ campo(form.tipo, classe='selecao') }}</div>
+  {{ campo(form.conteudo) }}
+  <div class="campo"><label for="{{ form.enunciado.id }}">Enunciado</label>{{ form.enunciado(class='area', rows=5, **{'data-preview': 'enunciado'}) }}
+    {% for e in form.enunciado.errors %}<p class="erro-campo">{{ e }}</p>{% endfor %}</div>
+  <fieldset class="pilha" data-bloco="multipla"><legend class="rotulo">Alternativas (marque a correta)</legend>
+    {% for t, c in alts %}
+    <div class="alt-linha"><input type="radio" name="alt_correta" value="{{ loop.index0 }}" aria-label="Alternativa {{ loop.index }} é a correta" {% if c %}checked{% endif %}>
+      <input class="entrada" name="alt_texto" value="{{ t }}" maxlength="1000" aria-label="Texto da alternativa {{ loop.index }}" data-preview="alt{{ loop.index0 }}"></div>
+    {% endfor %}
+  </fieldset>
+  <div data-bloco="discursiva" class="campo"><label for="{{ form.resposta_correta.id }}">Gabarito da discursiva</label>{{ form.resposta_correta(class='area', rows=3) }}</div>
+  <div class="campo"><label for="{{ form.explicacao.id }}">Explicação (aparece após responder)</label>{{ form.explicacao(class='area', rows=3, **{'data-preview': 'explicacao'}) }}</div>
+  <div class="campo"><label for="{{ form.imagem.id }}">Imagem</label>{{ form.imagem(class='entrada', accept='image/png,image/jpeg,image/webp') }}
+    {% for e in form.imagem.errors %}<p class="erro-campo">{{ e }}</p>{% endfor %}
+    {% if questao and questao.imagem_path %}<label class="marcar">{{ form.remover_imagem() }}<span>Remover imagem atual</span></label>{% endif %}</div>
+  <label class="marcar">{{ form.ativo() }}<span>{{ form.ativo.label.text }}</span></label>
+  <div class="linha"><button class="btn btn-primary" type="submit">{{ icone('check') }}Salvar</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.questoes') }}">Cancelar</a></div>
+</form>
+<aside class="folha pilha previa-fixa" aria-label="Preview">
+  <h2>Preview</h2>
+  <div class="enunciado" id="pv-enunciado" aria-live="polite"></div>
+  <ol class="pilha pv-alternativas" id="pv-alternativas"></ol>
+  <div class="explicacao" id="pv-explicacao"></div>
+</aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin_questao.js') }}" defer></script>{% endblock %}

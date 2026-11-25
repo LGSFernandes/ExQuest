@@ -1,0 +1,16 @@
+{% extends 'auth/_base.html' %}
+{% from '_ui.html' import campo, icone, csrf %}
+{% block titulo %}Entrar — ExQuest{% endblock %}
+{% block form %}
+<h1 id="auth-t">Entrar</h1>
+<p class="muted">Continue de onde parou: sua sequência e seu XP estão esperando.</p>
+<form method="post" class="form" novalidate>
+  {{ csrf() }}
+  {{ campo(form.email, 'email', autocomplete='username') }}
+  {{ campo(form.senha, 'password', autocomplete='current-password') }}
+  <label class="marcar">{{ form.lembrar() }}<span>{{ form.lembrar.label.text }}</span></label>
+  <button class="btn btn-block" type="submit">Entrar</button>
+</form>
+{% if google_ativo() %}<a class="btn btn-ghost btn-block" href="{{ url_for('auth.google') }}">Entrar com Google</a>{% endif %}
+<p class="linha linha-entre"><a href="{{ url_for('auth.recuperar') }}">Esqueci minha senha</a><a href="{{ url_for('auth.registro') }}">Criar conta</a></p>
+{% endblock %}

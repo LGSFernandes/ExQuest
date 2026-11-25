@@ -1,0 +1,8 @@
+{% extends 'auth/_base.html' %}
+{% block titulo %}Verifique seu e-mail — ExQuest{% endblock %}
+{% block form %}
+<h1 id="auth-t">Verifique seu e-mail</h1>
+<p>Se existir uma conta com esse e-mail, o link para redefinir a senha já está a caminho. Ele vale por 1 hora.</p>
+<p class="muted">Não chegou? Confira o spam e, se precisar, peça de novo daqui a alguns minutos.</p>
+<a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Voltar para entrar</a>
+{% endblock %}

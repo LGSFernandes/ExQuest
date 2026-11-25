@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone %}
+{% block titulo %}Resultado do simulado — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="folha pilha">
+  <p class="nota-grande">{{ s.acertos or 0 }}<span class="pauta-meta"> / {{ s.total }}</span></p>
+  <p class="linha"><span class="tag">{{ ((s.acertos or 0) * 100 / s.total)|round|int if s.total else 0 }}% de acerto</span>
+    <span class="tag">+{{ s.xp_total or 0 }} XP</span><span class="tag">+{{ s.moedas_total or 0 }} moedas</span>
+    {% if s.status == 'expirado' %}<span class="tag tag-dificil">Enviado fora do tempo</span>{% endif %}</p>
+  <p><a class="btn" href="{{ url_for('simulados.escolher') }}">Novo simulado</a></p>
+</div>
+<h2 class="espaco-t">Correção</h2>
+<div class="pilha pilha-l">
+{% for q in questoes %}{% set r = resp.get(q.id) %}
+  <article class="folha pilha">
+    <header class="linha"><strong>Questão {{ loop.index }}</strong>
+      {% if q.id in bloqueadas %}<span class="tag">Em andamento</span>{% elif r %}<span class="tag {{ 'tag-facil' if r.acertou else 'tag-dificil' }}">{{ 'Correta' if r.acertou else 'Incorreta' }}</span>{% else %}<span class="tag">Em branco</span>{% endif %}</header>
+    <div class="enunciado" data-katex>{{ q.enunciado }}</div>
+    {% if q.id in bloqueadas %}<p class="aviso-bloqueio">O gabarito desta questão aparece quando a competição em andamento terminar.</p>
+    {% elif q.tipo == 'discursiva' %}
+      <p><strong>Sua resposta:</strong> {{ r.resposta_texto if r else '—' }}</p>
+      {% if r and r.feedback_ia %}<p>{{ r.feedback_ia }}</p>{% endif %}
+      {% if q.resposta_correta %}<p><strong>Gabarito:</strong> {{ q.resposta_correta }}</p>{% endif %}
+    {% else %}
+    <div class="gabarito corrigido">{% for a in q.alternativas %}
+      <div class="opcao {{ 'certa' if a.correta else ('errada' if r and r.alternativa_id == a.id else '') }}">
+        <span class="bolha" aria-hidden="true">{{ 'ABCDEFGH'[loop.index0] }}</span><span class="opcao-texto" data-katex>{{ a.texto }}</span>
+        <span class="opcao-sinal" aria-hidden="true">{{ icone('check' if a.correta else 'x') }}</span>
+        {% if a.correta %}<span class="sr-only">Alternativa correta</span>{% elif r and r.alternativa_id == a.id %}<span class="sr-only">Sua resposta, incorreta</span>{% endif %}</div>{% endfor %}</div>
+    {% endif %}
+    {% if q.explicacao and q.id not in bloqueadas %}<div class="explicacao" data-katex>{{ q.explicacao }}</div>{% endif %}
+  </article>{% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% endblock %}

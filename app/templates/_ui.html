@@ -1,0 +1,77 @@
+{# Macros compartilhadas. Ícones vêm do sprite local (Lucide, ISC). #}
+{% macro icone(nome, classe='') -%}
+<svg class="icone {{ classe }}" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='img/logo.png') }}#{{ nome }}"/></svg>
+{%- endmacro %}
+
+{% macro logo(classe='marca-logo') -%}
+<svg class="{{ classe }}" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="15" r="11" fill="none" stroke="currentColor" stroke-width="3"/><path d="M19.5 20.5 26 27" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="16" cy="15" r="4.2" fill="var(--ink)"/></svg>
+{%- endmacro %}
+
+{% macro csrf() -%}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{%- endmacro %}
+
+{# Campo de formulário com rótulo visível e erro ligado por aria-describedby #}
+{% macro campo(f, tipo='text', ajuda=None, autocomplete=None, classe='entrada') %}
+{% set erros = f.errors %}
+<div class="campo">
+  {{ f.label }}
+  {% if tipo == 'textarea' %}
+    {{ f(class='area', **{'aria-invalid': 'true' if erros else 'false', 'aria-describedby': f.id ~ '-d'}) }}
+  {% else %}
+    {{ f(class=classe, autocomplete=autocomplete, **{'aria-invalid': 'true' if erros else 'false', 'aria-describedby': f.id ~ '-d'}) }}
+  {% endif %}
+  <div id="{{ f.id }}-d">
+    {% if ajuda %}<p class="ajuda">{{ ajuda }}</p>{% endif %}
+    {% for e in erros %}<p class="erro-campo">{{ icone('circle-alert') }}<span>{{ e }}</span></p>{% endfor %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro avatar(u, tamanho='') -%}
+{%- set borda = u.borda_ativa|classe_css -%}
+{%- if borda %}<span class="avatar-moldura {{ borda }}">{% endif -%}
+<span class="avatar {{ tamanho }}">
+  {%- if u.icon_path %}<img src="{{ url_for('static', filename='data/icon/' ~ u.icon_path) }}" alt="" loading="lazy" width="64" height="64">
+  {%- else %}{{ (u.nome or u.username or '?')[:1]|upper }}{% endif -%}
+</span>
+{%- if borda %}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro vazio(icone_nome, titulo, texto, rotulo=None, destino=None) %}
+<div class="vazio">{{ icone(icone_nome, 'icone-xl') }}<h3>{{ titulo }}</h3><p>{{ texto }}</p>
+{% if rotulo and destino %}<a class="btn" href="{{ destino }}">{{ rotulo }}</a>{% endif %}</div>
+{% endmacro %}
+
+{% macro paginacao(pag, endpoint, args={}) %}
+{% if pag.pages > 1 %}
+<nav class="paginacao" aria-label="Paginação">
+  {% if pag.has_prev %}<a href="{{ url_for(endpoint, page=pag.prev_num, **args) }}" aria-label="Página anterior">{{ icone('chevron-left') }}</a>{% endif %}
+  {% for n in pag.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if n %}{% if n == pag.page %}<span aria-current="page">{{ n }}</span>{% else %}<a href="{{ url_for(endpoint, page=n, **args) }}">{{ n }}</a>{% endif %}{% else %}<span>…</span>{% endif %}
+  {% endfor %}
+  {% if pag.has_next %}<a href="{{ url_for(endpoint, page=pag.next_num, **args) }}" aria-label="Próxima página">{{ icone('chevron-right') }}</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro avisos() %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% if msgs %}
+<div class="avisos" role="region" aria-label="Avisos">
+  {% for cat, msg in msgs %}
+    {% set c = cat if cat in ['sucesso','erro','perigo','aviso','warning','info'] else 'info' %}
+    <div class="aviso aviso-{{ c }}" role="{{ 'alert' if c in ['erro','perigo'] else 'status' }}">
+      {{ icone({'sucesso':'circle-check','erro':'circle-x','perigo':'circle-x','aviso':'triangle-alert','warning':'triangle-alert'}.get(c,'info')) }}
+      <p>{{ msg }}</p><button type="button" data-dispensar aria-label="Dispensar aviso">{{ icone('x') }}</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+{% endmacro %}
+
+{% macro nick(u) -%}
+{%- set g = (u.nick_gradiente or '').split(',') -%}
+{%- if g|length == 2 and (g[0]|cor_css) and (g[1]|cor_css) %}<span class="nick nick-grad nick-f-{{ u.nick_fonte|classe_css }}" data-vars="--nc1:{{ g[0] }};--nc2:{{ g[1] }}">{{ u.nome }}</span>
+{%- elif u.nick_cor|cor_css %}<span class="nick nick-f-{{ u.nick_fonte|classe_css }}" data-vars="--nc1:{{ u.nick_cor }}">{{ u.nome }}</span>
+{%- else %}<span class="nick nick-f-{{ u.nick_fonte|classe_css }}">{{ u.nome }}</span>{% endif -%}
+{%- endmacro %}

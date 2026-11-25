@@ -1,45 +1,14 @@
-{% extends "base.html" %}
-{% block title %}Questões{% endblock %}
-{% block content %}
-<div class="page-header animate-in" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-  <div><h1>&#x2753; Questões</h1><p>{{ questoes|length }} questão(ões).</p></div>
-  <a href="{{ url_for('main.admin_nova_questao') }}" class="btn btn-primary">+ Nova Questão</a>
-</div>
-<div class="card animate-in" style="margin-bottom:16px;padding:12px 16px">
-  <form method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    <select name="materia_id" class="form-control admin-select" style="width:auto;min-width:200px" onchange="this.form.submit()">
-      <option value="">Todas as matérias</option>
-      {% for m in materias %}<option value="{{ m.id }}" {% if materia_id_filtro==m.id %}selected{% endif %}>{{ m.icone }} {{ m.nome }}</option>{% endfor %}
-    </select>
-    {% if materia_id_filtro %}<a href="{{ url_for('main.admin_questoes') }}" class="btn btn-secondary btn-sm">✕ Limpar</a>{% endif %}
-  </form>
-</div>
-<div class="card animate-in">
-  {% if questoes %}
-  <table class="admin-table">
-    <thead><tr><th>Enunciado</th><th>Matéria</th><th>Tipo</th><th>Dificuldade</th><th style="text-align:right">Ações</th></tr></thead>
-    <tbody>
-      {% for q in questoes %}
-      <tr>
-        <td style="max-width:280px"><span style="font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ q.enunciado }}</span></td>
-        <td style="font-size:13px">{{ q.materia.icone }} {{ q.materia.nome }}</td>
-        <td><span class="badge" style="background:rgba(99,102,241,.12);color:var(--primary-light);font-size:11px">{{ '\U0001F4CB' if q.tipo=='multipla' else '\U0001F4DD' }} {{ 'Múltipla' if q.tipo=='multipla' else 'Discursiva' }}</span></td>
-        <td><span class="badge badge-{{ q.dificuldade }}">{{ q.dificuldade|capitalize }}</span></td>
-        <td style="text-align:right">
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <a href="{{ url_for('main.admin_editar_questao', id=q.id) }}" class="btn btn-secondary btn-sm">Editar</a>
-            <form method="POST" action="{{ url_for('main.admin_excluir_questao', id=q.id) }}" style="display:inline">
-              {{ csrf_token_field() }}
-              <button type="submit" class="btn btn-danger btn-sm" data-confirm="Excluir esta questão?">Excluir</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty-state"><div class="empty-state-icon">&#x1F4ED;</div><p>Nenhuma questão.</p><a href="{{ url_for('main.admin_nova_questao') }}" class="btn btn-primary" style="margin-top:14px">Criar Primeira</a></div>
-  {% endif %}
-</div>
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, paginacao %}
+{% block titulo %}Questões — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Questões</h1><p>{{ pag.total }} no total.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin.questao_nova') }}">{{ icone('plus') }}Nova questão</a></div>
+<form method="get" class="folha linha" data-busca-viva>
+  <div class="campo"><label for="f-q">Buscar no enunciado</label><input id="f-q" class="entrada" name="q" type="search" value="{{ q }}" maxlength="100" autocomplete="off"></div>
+  <div class="campo"><label for="f-m">Matéria</label><select id="f-m" class="selecao" name="materia_id"><option value="">Todas</option>
+    {% for m in materias %}<option value="{{ m.id }}" {% if m.id == materia_id %}selected{% endif %}>{{ m.nome }}</option>{% endfor %}</select></div>
+  <button class="btn btn-ghost" type="submit">{{ icone('search') }}Filtrar</button>
+</form>
+<div data-resultado aria-live="polite">{% include 'admin/_questoes_lista.html' %}</div>
 {% endblock %}

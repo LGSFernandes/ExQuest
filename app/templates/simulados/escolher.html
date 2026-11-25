@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, vazio, csrf %}
+{% block titulo %}Simulados — ExQuest{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Simulados</h1>
+  <p>Uma prova com tempo: 2 minutos por questão, nota no final e correção comentada.</p></div>
+  {% if restante is not none %}<p class="tag">{{ icone('zap') }}{{ restante }} {{ 'simulado' if restante == 1 else 'simulados' }} hoje</p>{% endif %}</div>
+{% if not materias %}
+  {{ vazio('list-checks', 'Ainda não há questões', 'Assim que houver questões cadastradas, você poderá montar simulados aqui.') }}
+{% else %}
+<form method="post" action="{{ url_for('simulados.iniciar') }}" class="folha pilha">
+  {{ csrf() }}
+  {% set materia_ids = [] %}{% set dificuldades = [] %}{% set conteudo = '' %}{% set tipo = '' %}
+  {% set materias_lista = materias|map(attribute=0)|list %}
+  {% with materias = materias_lista %}{% include 'questoes/_filtros.html' %}{% endwith %}
+  <div class="campo"><label for="qtd">Quantidade de questões (até {{ maximo }})</label>
+    <input id="qtd" class="entrada" type="number" name="quantidade" min="1" max="{{ maximo }}" value="{{ [10, maximo]|min }}" required></div>
+  <div><button class="btn" type="submit">{{ icone('play') }}Começar simulado</button></div>
+</form>
+{% endif %}
+{% if recentes %}
+<section class="espaco-t"><h2>Últimos simulados</h2>
+  <ul class="pauta">{% for r in recentes %}
+    <li><a class="pauta-item-link" href="{{ url_for('simulados.fazer', token=r.token) }}">
+      <div class="pauta-corpo"><div class="pauta-titulo">{{ r.acertos or 0 }} de {{ r.total }} corretas</div>
+      <div class="pauta-meta">{{ r.iniciado_em|datahora }} · {{ {'em_andamento':'em andamento','finalizado':'finalizado','expirado':'expirado'}[r.status] }}</div></div>{{ icone('chevron-right') }}</a></li>{% endfor %}</ul></section>
+{% endif %}
+{% endblock %}

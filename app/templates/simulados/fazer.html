@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf %}
+{% block titulo %}Simulado — ExQuest{% endblock %}
+{% block conteudo %}
+<form method="post" action="{{ url_for('simulados.finalizar', token=s.token) }}" class="pilha pilha-l" id="simulado" data-restante="{{ restante }}">
+  {{ csrf() }}
+  <div class="simulado-barra"><span><strong id="contadas">0</strong> de {{ questoes|length }} respondidas</span>
+    <span class="cronometro" id="cronometro" role="timer" aria-label="Tempo restante">--:--</span>
+    <button class="btn" type="submit" data-confirmar="Enviar o simulado agora? Questões em branco contam como erradas.">Enviar simulado</button></div>
+  {% for q in questoes %}
+  <article class="folha pilha simulado-q" id="q{{ q.id }}">
+    <header class="linha"><strong>Questão {{ loop.index }}</strong><span class="tag">{{ icone(q.materia.icone_chave or 'book') }}{{ q.materia.nome }}</span></header>
+    <div class="enunciado" data-katex>{{ q.enunciado }}{% if q.imagem_path %}<img src="{{ url_for('static', filename='data/img_questao/' ~ q.imagem_path) }}" alt="Imagem da questão" loading="lazy">{% endif %}</div>
+    {% if q.tipo == 'discursiva' %}
+      <div class="campo"><label for="t{{ q.id }}">Sua resposta</label><textarea id="t{{ q.id }}" class="area" name="q{{ q.id }}" rows="5" maxlength="2000" data-marca></textarea></div>
+    {% else %}
+      <fieldset class="gabarito"><legend class="rotulo">Alternativas</legend>
+      {% for a in q.alternativas %}<label class="opcao"><input type="radio" name="q{{ q.id }}" value="{{ a.id }}" data-marca>
+        <span class="bolha" aria-hidden="true">{{ 'ABCDEFGH'[loop.index0] }}</span><span class="opcao-texto" data-katex>{{ a.texto }}</span><span class="opcao-sinal"></span></label>{% endfor %}
+      </fieldset>
+    {% endif %}
+  </article>{% endfor %}
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/simulado.js') }}" defer></script>
+{% endblock %}

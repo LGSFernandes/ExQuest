@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf %}
+{% block titulo %}Missões — ExQuest{% endblock %}
+{% macro lista(itens) %}
+<ul class="pauta">{% for i in itens %}{% set m = i.missao %}
+  <li><div class="pauta-item-link missao">
+    <div class="pauta-corpo"><div class="pauta-titulo">{{ m.titulo }}</div>
+      <div class="pauta-meta">{{ i.descricao }} Recompensa: {{ m.xp }} XP e {{ m.moedas }} moedas.</div>
+      <progress class="regua" max="{{ i.meta }}" value="{{ i.atual }}" aria-label="Progresso de {{ m.titulo }}">{{ i.atual }}</progress>
+      <div class="pauta-meta">{{ i.atual }} de {{ i.meta }}</div></div>
+    <div class="missao-acao">{% if i.resgatada %}<span class="tag">{{ icone('check') }}Resgatada</span>
+    {% elif i.pronta %}<form method="post" action="{{ url_for('missoes.resgatar', slug=m.slug) }}">{{ csrf() }}<button class="btn btn-primary" type="submit">Resgatar</button></form>
+    {% else %}<span class="tag">Em andamento</span>{% endif %}</div>
+  </div></li>{% endfor %}</ul>
+{% endmacro %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Missões</h1><p>O progresso vem das suas respostas reais. Questões repetidas no período contam uma vez.</p></div></div>
+<section><h2>Hoje</h2>{{ lista(diarias) }}</section>
+<section class="espaco-t"><h2>Esta semana</h2>{{ lista(semanais) }}</section>
+{% endblock %}

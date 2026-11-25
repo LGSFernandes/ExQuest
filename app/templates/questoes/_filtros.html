@@ -1,0 +1,23 @@
+{# Filtros compartilhados entre questões e simulados. Espera: materias (lista de Materia), materia_ids, dificuldades, dificuldades_lista, conteudo, tipo #}
+{% from '_ui.html' import icone %}
+<fieldset class="campo"><legend class="rotulo">Matérias</legend>
+  <div class="linha">
+  {% for m in materias %}
+    <label class="chip"><input type="checkbox" name="materia_id" value="{{ m.id }}" {% if m.id in materia_ids %}checked{% endif %}>
+      <span>{{ icone(m.icone_chave or 'book') }}{{ m.nome }}</span></label>
+  {% endfor %}
+  </div>
+</fieldset>
+<fieldset class="campo"><legend class="rotulo">Dificuldade</legend>
+    <div class="linha">{% for v, rot in dificuldades_lista %}
+      <label class="chip"><input type="checkbox" name="dificuldade" value="{{ v }}" {% if v in dificuldades %}checked{% endif %}><span>{{ rot }}</span></label>{% endfor %}</div>
+  </fieldset>
+<div class="grade" data-vars="--min:13rem">
+  <div class="campo"><label for="f-tipo">Tipo</label>
+    <select id="f-tipo" class="selecao" name="tipo"><option value="">Todos</option>
+      <option value="multipla" {% if tipo == 'multipla' %}selected{% endif %}>Múltipla escolha</option>
+      <option value="discursiva" {% if tipo == 'discursiva' %}selected{% endif %}>Discursiva</option></select></div>
+  <div class="campo"><label for="f-conteudo">Assunto</label>
+    <input id="f-conteudo" class="entrada" name="conteudo" value="{{ conteudo }}" maxlength="100" placeholder="Ex.: funções, Brasil Colônia"
+      list="sug-conteudo" autocomplete="off" data-sugestoes="{{ url_for('questoes.sugestoes') }}"><datalist id="sug-conteudo"></datalist></div>
+</div>

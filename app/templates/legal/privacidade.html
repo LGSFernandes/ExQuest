@@ -1,0 +1,60 @@
+{% extends 'base_public.html' %}
+{% block titulo %}Política de Privacidade — ExQuest{% endblock %}
+{% block descricao %}Quais dados o ExQuest coleta, para quê, com quem compartilha e como exercer seus direitos pela LGPD.{% endblock %}
+{% block conteudo %}
+<div class="pagina pagina-estreita pilha pilha-l">
+  <h1>Política de Privacidade</h1>
+  <p class="muted">Última atualização: 14 de novembro de 2026.</p>
+  <p>Esta política explica como o ExQuest trata seus dados pessoais, de acordo com a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
+
+  <section class="pilha"><h2>1. Dados que coletamos</h2>
+    <ul>
+      <li><strong>Conta:</strong> nome, sobrenome, nome de usuário, e-mail e senha (guardada apenas como hash, nunca em texto). Se você entra com Google, recebemos nome, e-mail verificado e o identificador da conta Google.</li>
+      <li><strong>Perfil (opcional):</strong> foto, banner e biografia, além das escolhas de visibilidade do perfil, das estatísticas, do histórico e dos amigos.</li>
+      <li><strong>Uso do serviço:</strong> respostas dadas, acertos, simulados, revisões, coleções, missões, competições, XP, moedas, sequência e itens da loja.</li>
+      <li><strong>Social:</strong> pedidos de amizade, bloqueios, grupos, mensagens e imagens enviadas no chat, notificações e denúncias que você faz ou recebe.</li>
+      <li><strong>Pagamentos:</strong> produto, valor, status e identificadores do pedido no Mercado Pago ou no Stripe. Dados de cartão ficam apenas com o provedor.</li>
+      <li><strong>Segurança:</strong> registros de ações sensíveis (entrada, troca de senha, pagamentos, moderação) com endereço IP e navegador, usados para detectar fraudes e abusos.</li>
+    </ul></section>
+
+  <section class="pilha"><h2>2. Para que usamos</h2>
+    <p>Para criar e proteger sua conta, mostrar seu progresso e rankings, calcular recompensas, permitir a interação com outras pessoas, processar pagamentos, enviar e-mails de recuperação de senha, moderar o serviço e cumprir obrigações legais. As bases legais são a execução do contrato (o serviço que você pediu), o legítimo interesse (segurança e prevenção a fraudes) e o cumprimento de obrigações legais (registros financeiros).</p>
+    <p>Não vendemos seus dados, não usamos anúncios e não usamos ferramentas de análise ou rastreamento de terceiros.</p></section>
+
+  <section class="pilha"><h2>3. Quem vê o quê</h2>
+    <p>Seu nome de usuário, nível, XP e cosméticos aparecem em rankings e competições. Seu perfil completo só fica visível a outras pessoas conforme as opções de privacidade em Configurações. Mensagens do chat ficam visíveis apenas aos participantes da conversa; imagens do chat só são entregues a quem é membro do grupo. Administradores podem ver conteúdo denunciado para moderar.</p></section>
+
+  <section class="pilha"><h2>4. Com quem compartilhamos</h2>
+    <ul>
+      <li>Mercado Pago e Stripe, para processar pagamentos que você iniciar.</li>
+      <li>Google, se você escolher entrar com a conta Google.</li>
+      <li>O serviço de e-mail usado para enviar mensagens de recuperação de senha.</li>
+      <li>Autoridades, quando exigido por lei ou ordem judicial.</li>
+    </ul></section>
+
+  <section class="pilha"><h2>5. Cookies e armazenamento local</h2>
+    <p>Usamos apenas o necessário: um cookie de sessão para manter você conectado, um cookie opcional de "lembrar de mim", um token de proteção contra ataques (CSRF) e a preferência de tema guardada no seu navegador. Não usamos cookies de publicidade ou de análise.</p></section>
+
+  <section class="pilha"><h2>6. Por quanto tempo guardamos</h2>
+    <p>Mantemos seus dados enquanto a conta existir. Ao excluir a conta, removemos nome, e-mail, usuário, foto, banner, biografia, amigos, coleções, notificações e mensagens, e a senha é apagada. Mantemos, sem identificação pessoal, registros de pagamento e carteira (por obrigação legal e contábil), histórico anonimizado de respostas e participações em competições, e o histórico das ações de segurança, já sem endereço IP nem navegador, que são apagados na exclusão. Avisos de outras pessoas que citavam seu nome passam a mostrar “Uma conta excluída”.</p></section>
+
+  <section class="pilha"><h2>7. Seus direitos</h2>
+    <p>Pela LGPD você pode confirmar o tratamento, acessar, corrigir, portar, anonimizar ou eliminar seus dados e revogar consentimentos. No ExQuest, em <a href="{{ url_for('perfil.configuracoes') }}">Configurações</a>, você pode:</p>
+    <ul>
+      <li>corrigir nome, usuário, biografia, foto e banner e ajustar a privacidade do perfil;</li>
+      <li>baixar uma cópia dos seus dados em JSON ("Baixar meus dados");</li>
+      <li>excluir a conta ("Excluir conta").</li>
+    </ul>
+    {% if config.CONTATO_EMAIL %}<p>Para qualquer outro pedido, escreva para <a href="mailto:{{ config.CONTATO_EMAIL }}">{{ config.CONTATO_EMAIL }}</a>.</p>{% endif %}
+    <p>Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p></section>
+
+  <section class="pilha"><h2>8. Crianças e adolescentes</h2>
+    <p>Menores de 18 anos devem usar o ExQuest com o conhecimento de um responsável. Se você é responsável e acredita que uma criança enviou dados sem a sua ciência, entre em contato para que possamos removê-los.</p></section>
+
+  <section class="pilha"><h2>9. Segurança</h2>
+    <p>Usamos conexão cifrada (HTTPS), senhas com hash, proteção contra CSRF, política de segurança de conteúdo restritiva, limites de tentativas e controle de acesso por conta. Nenhum sistema é totalmente imune; em caso de incidente que possa causar risco relevante, avisaremos as pessoas afetadas e a ANPD, conforme a lei.</p></section>
+
+  <section class="pilha"><h2>10. Mudanças</h2>
+    <p>Podemos atualizar esta política e avisaremos sobre mudanças relevantes. A data da última atualização está no topo.</p></section>
+</div>
+{% endblock %}

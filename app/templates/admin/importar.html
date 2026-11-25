@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icone, csrf %}
+{% block titulo %}Importar questões — Administração{% endblock %}
+{% block conteudo %}
+<div class="pagina-topo"><div><h1>Importar questões</h1>
+  <p>Envie um arquivo JSON no formato exportado por <a href="{{ url_for('admin.questoes_exportar') }}">Exportar questões</a>. A importação é tudo ou nada: se houver erro, nada é salvo. Questões já existentes (mesma matéria e enunciado) são ignoradas. Imagens não são importadas.</p></div></div>
+{% if relatorio and relatorio.ok %}
+<div class="relatorio relatorio-ok" role="status">{{ relatorio.importadas }} questões importadas; {{ relatorio.duplicadas }} já existiam e foram ignoradas.</div>
+{% elif relatorio %}
+<div class="relatorio relatorio-erro" role="alert"><strong>{{ relatorio.total_erros }} problema(s) encontrado(s). Nada foi importado.</strong>
+  <ul class="pilha">{% for e in relatorio.erros %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+<form method="post" enctype="multipart/form-data" class="folha pilha">
+  {{ csrf() }}
+  <div class="campo"><label for="arquivo">Arquivo JSON</label><input id="arquivo" class="entrada" type="file" name="arquivo" accept="application/json,.json" required></div>
+  <div class="linha"><button class="btn btn-primary" type="submit">{{ icone('upload') }}Importar</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.questoes_exportar') }}">{{ icone('download') }}Exportar questões</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'auth/_base.html' %}
+{% from '_ui.html' import campo, csrf %}
+{% block titulo %}Criar conta — ExQuest{% endblock %}
+{% block form %}
+<h1 id="auth-t">Criar conta</h1>
+<p class="muted">Grátis para começar. Você pode assinar um plano depois, se quiser.</p>
+<form method="post" class="form" novalidate>
+  {{ csrf() }}
+  <div class="form-linha">{{ campo(form.nome, autocomplete='given-name') }}{{ campo(form.sobrenome, autocomplete='family-name') }}</div>
+  {{ campo(form.username, ajuda='Letras minúsculas, números, ponto e sublinhado.', autocomplete='username') }}
+  {{ campo(form.email, 'email', autocomplete='email') }}
+  {{ campo(form.senha, 'password', ajuda='Mínimo de 8 caracteres.', autocomplete='new-password') }}
+  {{ campo(form.confirmar_senha, 'password', autocomplete='new-password') }}
+  <div>
+    <label class="marcar">{{ form.aceito() }}<span>Li e aceito os <a href="{{ url_for('main.termos') }}" target="_blank" rel="noopener">termos de uso</a> e a <a href="{{ url_for('main.privacidade') }}" target="_blank" rel="noopener">política de privacidade</a></span></label>
+    {% for e in form.aceito.errors %}<p class="erro-campo">{{ e }}</p>{% endfor %}
+  </div>
+  <button class="btn btn-block" type="submit">Criar conta</button>
+</form>
+{% if google_ativo() %}<a class="btn btn-ghost btn-block" href="{{ url_for('auth.google') }}">Continuar com Google</a>{% endif %}
+<p>Já tem conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+{% endblock %}
