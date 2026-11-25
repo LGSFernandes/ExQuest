@@ -1,0 +1,7 @@
+# Opcional: rastreamento distribuído (OTEL_ENABLED=true). Instale com: pip install -r requirements-otel.txt
+-r requirements.txt
+opentelemetry-sdk==1.45.2
+opentelemetry-exporter-otlp-proto-http==1.45.2
+opentelemetry-instrumentation-flask==0.66b2
+opentelemetry-instrumentation-sqlalchemy==0.66b2
+opentelemetry-instrumentation-requests==0.66b2

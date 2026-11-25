@@ -1,0 +1,3 @@
+# Opcional: produção com PostgreSQL (o SQLite local não precisa disto)
+-r requirements.txt
+psycopg[binary]>=3.2
