@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+!.env.example
+instance
+app/static/data
+__pycache__
+.pytest_cache
+tests

@@ -1,0 +1,81 @@
+# Uso: copie .env.example para .env, preencha SECRET_KEY e BASE_URL, depois:
+#   docker compose up -d --build                      (1 instância web, SQLite)
+#   docker compose up -d --scale web=3                (várias instâncias atrás do nginx; ver deploy/nginx.conf)
+#   docker compose --profile redis up -d              (cache, limitador e contadores em Redis)
+#   docker compose --profile postgres up -d           (PostgreSQL; defina DATABASE_URL no .env)
+# SQLite com várias instâncias só funciona no MESMO servidor (volume compartilhado, modo WAL).
+# Para vários servidores use PostgreSQL e coloque o banco na mesma região/rede do app (latência baixa).
+x-app: &app
+  build: .
+  env_file: .env
+  environment: &app-env
+    APP_ENV: production
+    TRUSTED_PROXIES: "1"
+    JOBS_MODE: queue            # e-mails e imagens pesadas vão para a fila; o serviço `worker` executa
+    MANUTENCAO_INLINE: "false"  # a rotina periódica roda no serviço `tarefas`, não dentro das requisições
+  volumes:
+    - banco:/srv/instance
+    - uploads:/srv/app/static/data   # uploads públicos são servidos em /static/data
+
+services:
+  migrar:   # roda uma vez por deploy: backup, migrações e seed da loja
+    <<: *app
+    command: ["sh", "-c", "flask --app main migrar && flask --app main loja-seed"]
+    restart: "no"
+
+  web:      # escalável: --scale web=N
+    <<: *app
+    depends_on:
+      migrar: {condition: service_completed_successfully}
+    expose: ["8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  proxy:    # distribui o tráfego entre as instâncias web (least_conn) e serve os estáticos com cache longo
+    image: nginx:1.27-alpine
+    depends_on: [web]
+    ports: ["127.0.0.1:8080:80"]   # coloque TLS (Caddy/Cloudflare/nginx do host) na frente desta porta
+    volumes:
+      - ./deploy/nginx.compose.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads:/srv/app/static/data:ro
+    restart: unless-stopped
+
+  worker:   # consome a fila de jobs (e-mails, otimização de imagens); pode ter mais de um
+    <<: *app
+    command: ["flask", "--app", "main", "jobs-worker"]
+    depends_on:
+      migrar: {condition: service_completed_successfully}
+    restart: unless-stopped
+
+  tarefas:  # rotina periódica: encerra competições, expira Premium, reconcilia pagamentos, limpa métricas e jobs antigos
+    <<: *app
+    command: ["sh", "-c", "while true; do flask --app main manutencao || true; sleep 300; done"]
+    depends_on:
+      migrar: {condition: service_completed_successfully}
+    restart: unless-stopped
+
+  redis:
+    profiles: ["redis"]
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    restart: unless-stopped
+
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: exquest
+      POSTGRES_USER: exquest
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}   # obrigatório ao usar o perfil postgres (a imagem recusa senha vazia)
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    restart: unless-stopped
+
+volumes:
+  banco:
+  uploads:
+  pgdata:

@@ -1,164 +1,45 @@
-# ============================================================
-# ExQuest — Git ignore
-# Versão preparada para preservar segredos, dados locais e uploads
-# sem excluir código, migrations, documentação ou assets necessários.
-# ============================================================
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
 
-# ----------------------------
-# Segredos e configurações locais
-# ----------------------------
+# Segredos e configuração local (NUNCA versionar)
 .env
 .env.*
 !.env.example
-!.env.*.example
 
-# Diretórios/arquivos de credenciais locais
-/secrets/
-**/secrets/
-**/credentials*.json
-**/client_secret*.json
-**/service-account*.json
-**/*_private_key*
-
-# Chaves e certificados privados (não ignorar certificados públicos
-# versionados deliberadamente sem antes revisar o caso)
-*.pem
-*.key
-*.p12
-*.pfx
-*.jks
-
-# ----------------------------
-# Banco de dados e dados locais
-# ----------------------------
-/instance/
+# Banco de dados e backups locais
 *.db
-*.sqlite
+*.db-wal
+*.db-shm
 *.sqlite3
-*.sqlite3-*
-*.db-*
-*.sqlite-*
+instance/*
+!instance/.gitkeep
 
-# Backups locais de bancos e arquivos
-*.bak
-*.backup
-*.dump
-*.sql.gz
-*.sqlite.bak
+# Uploads de usuários (avatares, banners, imagens de questões/chat): dados, não código.
+# Em produção devem ficar em volume persistente; veja docs/GUIA_DE_INSTALACAO_E_DESENVOLVIMENTO.md
+app/static/data/*
+!app/static/data/.gitkeep
 
-# ----------------------------
-# Python
-# ----------------------------
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
+# Ativos oficiais do produto (ícones, selos, imagens de marca) ficam em app/static/assets/ e SÃO versionados.
+# Bibliotecas de terceiros em app/static/vendor/ (KaTeX) também são versionadas, com licença.
 
-# Ambientes virtuais
-.venv/
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# Empacotamento e builds
-build/
-dist/
-downloads/
-*.egg
-*.egg-info/
-.installed.cfg
-MANIFEST
-wheels/
-
-# ----------------------------
-# Testes, cobertura e ferramentas
-# ----------------------------
+# Testes / cobertura / ferramentas
 .pytest_cache/
-.tox/
-.nox/
-.hypothesis/
 .coverage
-.coverage.*
 htmlcov/
-coverage.xml
-nosetests.xml
-.cache/
-.webassets-cache/
 .mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
 .ruff_cache/
-.hatch/
-node_modules/
-playwright-report/
 test-results/
+playwright-report/
 
-# ----------------------------
-# Logs, temporários e runtime
-# ----------------------------
-*.log
-logs/
-tmp/
-temp/
-*.tmp
-*.temp
-*.swp
-*.swo
-*~
-
-# ----------------------------
-# Uploads e arquivos gerados em runtime
-# Por padrão, tudo dentro de app/static/data/ fica fora do Git.
-# Exceções: .gitkeep para manter diretórios e badges oficiais do produto.
-# Os três PNGs Premium abaixo são referenciados por perfil.html.
-# Novos assets oficiais devem ficar preferencialmente em app/static/img/
-# ou app/static/assets/; caso precisem ficar aqui, adicione uma exceção
-# explícita abaixo após revisar que não são uploads de usuários.
-# ----------------------------
-/app/static/data/*
-!/app/static/data/.gitkeep
-!/app/static/data/*/
-/app/static/data/*/*
-!/app/static/data/*/.gitkeep
-!/app/static/data/badges/premium_advan.png
-!/app/static/data/badges/premium_basic.png
-!/app/static/data/badges/premium_inter.png
-
-# ----------------------------
-# Sistema operacional
-# ----------------------------
+# Sistema / editores
 .DS_Store
-.AppleDouble
-.LSOverride
 Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# ----------------------------
-# IDEs e editores
-# ----------------------------
 .idea/
 .vscode/
-.cursorindexingignore
-.spyderproject
-.spyproject
-.ropeproject
-
-# Jupyter
-.ipynb_checkpoints/
-profile_default/
-ipython_config.py
-
-# ----------------------------
-# Observações:
-# - Mantenha migrations/, requirements.txt, LICENSE e docs/ versionados.
-# - Mantenha app/static/vendor/katex/: o projeto usa a cópia local do KaTeX.
-# - Mantenha app/static/img/ e app/static/data/badges/ se forem assets oficiais.
-# - Não ignore imagens por extensão globalmente; isso esconderia assets do produto.
-# ============================================================
-
-app_secrets.py
+*.log
