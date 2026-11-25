@@ -1,7 +1,7 @@
 """Atualização 1.4
 
 Revision ID: 550c87642fa5
-Revises: 
+Revises: 0000_baseline
 Create Date: 2026-05-25 09:03:26.788668
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '550c87642fa5'
-down_revision = None
+down_revision = '0000_baseline'
 branch_labels = None
 depends_on = None
 

@@ -1,5 +1,4 @@
 import logging
-from logging.config import fileConfig
 
 from flask import current_app
 
@@ -9,9 +8,7 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# O logging é configurado pela aplicação (app/logging_setup.py); não reconfigurar aqui.
 logger = logging.getLogger('alembic.env')
 
 
@@ -97,6 +94,12 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        eh_sqlite = connection.dialect.name == "sqlite"
+        if eh_sqlite:
+            # batch_alter_table recria tabelas (cópia + drop + rename): com FK ligada o SQLite recusa.
+            # O PRAGMA precisa vir fora de transação; a integridade é conferida logo após as migrations.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()  # encerra a transação implícita; senão o Alembic não faz commit do carimbo de versão
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
@@ -105,6 +108,12 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+        if eh_sqlite:
+            violacoes = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+            connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+            if violacoes:
+                raise RuntimeError(f"Integridade referencial violada após a migration: {violacoes[:10]}")
 
 
 if context.is_offline_mode():
